@@ -69,7 +69,7 @@ jobs:
           node-version: "16.x"
           registry-url: "https://npm.pkg.github.com"
           scope: "@whaticket"
-        run: npm publish
+      - run: npm publish
         env:
           # NOTE: using the built-in GITHUB token here because we're publishing to THIS repository's packages.
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
