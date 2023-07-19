@@ -64,7 +64,12 @@ jobs:
       #     prerelease: false
 
       - name: NPM Publish
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@whaticket"
         run: npm publish
         env:
           # NOTE: using the built-in GITHUB token here because we're publishing to THIS repository's packages.
-          NODE_AUTH_TOKEN: ${{ github.token }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
