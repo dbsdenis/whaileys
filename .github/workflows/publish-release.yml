@@ -26,12 +26,12 @@ jobs:
       - name: Checkout Commit
         uses: actions/checkout@v3
 
-      - name: Parsing Package Info
-        id: packageInfo
-        run: |
-          echo "::set-output name=package-name::$(jq -r .name package.json)"
-          echo "::set-output name=package-version::$(jq -r .version package.json)"
-          echo "::set-output name=commit-msg::$(git log -1 --pretty=%B)"
+      # - name: Parsing Package Info
+      #   id: packageInfo
+      #   run: |
+      #     echo "::set-output name=package-name::$(jq -r .name package.json)"
+      #     echo "::set-output name=package-version::$(jq -r .version package.json)"
+      #     echo "::set-output name=commit-msg::$(git log -1 --pretty=%B)"
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v3
@@ -46,25 +46,25 @@ jobs:
       - name: Build
         run: yarn run build:tsc
 
-      - name: Create Release
-        id: releaseCreate
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # The name of the tag. This should come from the webhook payload, `github.GITHUB_REF` when a user pushes a new tag
-          tag_name: v${{ steps.packageInfo.outputs.package-version }}
-          # The name of the release. For example, `Release v1.0.1`
-          release_name: v${{ steps.packageInfo.outputs.package-version }}
-          # Text describing the contents of the tag.
-          body: ${{steps.packageInfo.outputs.commit-msg}}
-          # `true` to create a draft (unpublished) release, `false` to create a published one. Default: `false`
-          draft: false
-          # `true` to identify the release as a prerelease. `false` to identify the release as a full release. Default: `false`
-          prerelease: false
+      # - name: Create Release
+      #   id: releaseCreate
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     # The name of the tag. This should come from the webhook payload, `github.GITHUB_REF` when a user pushes a new tag
+      #     tag_name: v${{ steps.packageInfo.outputs.package-version }}
+      #     # The name of the release. For example, `Release v1.0.1`
+      #     release_name: v${{ steps.packageInfo.outputs.package-version }}
+      #     # Text describing the contents of the tag.
+      #     body: ${{steps.packageInfo.outputs.commit-msg}}
+      #     # `true` to create a draft (unpublished) release, `false` to create a published one. Default: `false`
+      #     draft: false
+      #     # `true` to identify the release as a prerelease. `false` to identify the release as a full release. Default: `false`
+      #     prerelease: false
 
       - name: NPM Publish
-        run: npm publish --access restricted
+        run: npm publish
         env:
           # NOTE: using the built-in GITHUB token here because we're publishing to THIS repository's packages.
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ github.token }}
