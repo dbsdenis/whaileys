@@ -41,10 +41,10 @@ jobs:
           scope: "@whaticket"
 
       - name: Install Dependencies
-        run: npm i
+        run: yarn
 
       - name: Build
-        run: npm run build:tsc
+        run: yarn run build:tsc
 
       - name: Create Release
         id: releaseCreate
