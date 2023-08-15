@@ -64,6 +64,9 @@ type Templatable = {
 
     footer?: string
 }
+type Editable = {
+    edit?: WAMessageKey
+  }
 type Listable = {
     /** Sections of the List */
     sections?: proto.Message.ListMessage.ISection[]
@@ -107,7 +110,7 @@ export type AnyMediaMessageContent = (
         mimetype: string
         fileName?: string
     } & Buttonable & Templatable))
-    & { mimetype?: string }
+    & { mimetype?: string } & Editable
 
 export type ButtonReplyInfo = {
     displayText: string
@@ -124,7 +127,7 @@ export type AnyRegularMessageContent = (
 	    text: string
         linkPreview?: WAUrlInfo | null
     }
-    & Mentionable & Buttonable & Templatable & Listable)
+    & Mentionable & Buttonable & Templatable & Listable & Editable)
     | AnyMediaMessageContent
     | {
         contacts: {
