@@ -134,12 +134,19 @@ export const decodeDecompressedBinaryNode = (
 	}
 
 	const readJidPair = () => {
-		const i = readString(readByte())
-		const j = readString(readByte())
+
+    const iByte = readByte()
+    const i = readString(iByte)
+    const jByte = readByte()
+    const j = readString(jByte)
+
+		// const i = readString(readByte())
+		// const j = readString(readByte())
 		if(j) {
       const number = i?.toString?.()
-      if (number && number?.length > 14) {
-        console.log({info: "readJidPair", server: j})
+      if (number && number?.length > 14 && j !== 'g.us') {
+        
+        console.log({info: "readJidPair", server: j, i, jByte })
       }
 
 			return (i || '') + '@' + j
@@ -152,10 +159,6 @@ export const decodeDecompressedBinaryNode = (
 		const agent = readByte()
 		const device = readByte()
 		const user = readString(readByte())
-
-    if (user && user.toString().length > 14) {
-      console.log({info: "readAdJid", agent, device, user})
-    }
 
 		return jidEncode(user, 's.whatsapp.net', device, agent)
 	}
