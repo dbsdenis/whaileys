@@ -52,6 +52,8 @@ export const isJidBroadcast = (jid: string | undefined) => (jid?.endsWith('@broa
 export const isJidGroup = (jid: string | undefined) => (jid?.endsWith('@g.us'))
 /** is the jid the status broadcast */
 export const isJidStatusBroadcast = (jid: string) => jid === 'status@broadcast'
+/** is the jid a group */
+export const isLidUser = (jid: string | undefined) => (jid?.endsWith('@lid'))
 
 export const jidNormalizedUser = (jid: string | undefined) => {
 	const result = jidDecode(jid)

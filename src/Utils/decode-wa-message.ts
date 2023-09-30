@@ -1,7 +1,7 @@
 import { Boom } from '@hapi/boom'
 import { proto } from '../../WAProto'
 import { AuthenticationState, WAMessageKey } from '../Types'
-import { areJidsSameUser, BinaryNode, isJidBroadcast, isJidGroup, isJidStatusBroadcast, isJidUser } from '../WABinary'
+import { areJidsSameUser, BinaryNode, isJidBroadcast, isJidGroup, isJidStatusBroadcast, isJidUser, isLidUser } from '../WABinary'
 import { unpadRandomMax16 } from './generics'
 import { decryptGroupSignalProto, decryptSignalProto, processSenderKeyMessage } from './signal'
 
@@ -22,6 +22,19 @@ export const decodeMessageStanza = (stanza: BinaryNode, auth: AuthenticationStat
 	const isMe = (jid: string) => areJidsSameUser(jid, auth.creds.me!.id)
 
 	if(isJidUser(from)) {
+		if(recipient) {
+			if(!isMe(from)) {
+				throw new Boom('receipient present, but msg not from me', { data: stanza })
+			}
+
+			chatId = recipient
+		} else {
+			chatId = from
+		}
+
+		msgType = 'chat'
+		author = from
+	} else if(isLidUser(from)) {
 		if(recipient) {
 			if(!isMe(from)) {
 				throw new Boom('receipient present, but msg not from me', { data: stanza })
