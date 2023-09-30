@@ -134,21 +134,9 @@ export const decodeDecompressedBinaryNode = (
 	}
 
 	const readJidPair = () => {
-
-    const iByte = readByte()
-    const i = readString(iByte)
-    const jByte = readByte()
-    const j = readString(jByte)
-
-		// const i = readString(readByte())
-		// const j = readString(readByte())
+		const i = readString(readByte())
+		const j = readString(readByte())
 		if(j) {
-      const number = i?.toString?.()
-      if (number && number?.length > 14 && j !== 'g.us') {
-        
-        console.log({info: "readJidPair", server: j, i, jByte })
-      }
-
 			return (i || '') + '@' + j
 		}
 
