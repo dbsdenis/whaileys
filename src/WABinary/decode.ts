@@ -139,7 +139,7 @@ export const decodeDecompressedBinaryNode = (
 		if(j) {
       const number = i?.toString?.()
       if (number && number?.length > 14) {
-        console.log("🚀 server:", j)
+        console.log({info: "readJidPair", server: j})
       }
 
 			return (i || '') + '@' + j
@@ -154,9 +154,7 @@ export const decodeDecompressedBinaryNode = (
 		const user = readString(readByte())
 
     if (user && user.toString().length > 14) {
-      console.log("🚀 ~ agent:", agent)
-      console.log("🚀 ~ device:", device)
-      console.log("🚀 ~ user:", user)
+      console.log({info: "readAdJid", agent, device, user})
     }
 
 		return jidEncode(user, 's.whatsapp.net', device, agent)
