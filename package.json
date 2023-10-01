@@ -1,6 +1,6 @@
 {
   "name": "@whaticket/baileys",
-  "version": "5.3.8",
+  "version": "5.3.9",
   "description": "WhatsApp API",
   "homepage": "https://github.com/whaticket/baileys",
   "main": "lib/index.js",
