@@ -412,8 +412,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					const meJids: string[] = []
 					const otherJids: string[] = []
 					for(const { user, device } of devices) {
-						const jid = jidEncode(user, isLid ? 'lid' : 's.whatsapp.net', device)
 						const isMe = user === meUser
+						const jid = jidEncode(user, !isMe && isLid ? 'lid' : 's.whatsapp.net', device)
 						if(isMe) {
 							meJids.push(jid)
 						} else {
