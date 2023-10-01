@@ -24,7 +24,7 @@ export const decodeMessageStanza = (stanza: BinaryNode, auth: AuthenticationStat
 
 	if(isJidUser(from) || isLidUser(from)) {
 		if(recipient) {
-			if(!isMe(from) || !isMeLid(from)) {
+			if(!isMe(from) && !isMeLid(from)) {
 				throw new Boom('receipient present, but msg not from me', { data: stanza })
 			}
 
