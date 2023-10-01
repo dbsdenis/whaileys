@@ -21,20 +21,7 @@ export const decodeMessageStanza = (stanza: BinaryNode, auth: AuthenticationStat
 
 	const isMe = (jid: string) => areJidsSameUser(jid, auth.creds.me!.id)
 
-	if(isJidUser(from)) {
-		if(recipient) {
-			if(!isMe(from)) {
-				throw new Boom('receipient present, but msg not from me', { data: stanza })
-			}
-
-			chatId = recipient
-		} else {
-			chatId = from
-		}
-
-		msgType = 'chat'
-		author = from
-	} else if(isLidUser(from)) {
+	if(isJidUser(from) || isLidUser(from)) {
 		if(recipient) {
 			if(!isMe(from)) {
 				throw new Boom('receipient present, but msg not from me', { data: stanza })
