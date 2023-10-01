@@ -20,10 +20,11 @@ export const decodeMessageStanza = (stanza: BinaryNode, auth: AuthenticationStat
 	const recipient: string | undefined = stanza.attrs.recipient
 
 	const isMe = (jid: string) => areJidsSameUser(jid, auth.creds.me!.id)
+  const isMeLid = (jid: string) => areJidsSameUser(jid, auth.creds.me!.lid)
 
 	if(isJidUser(from) || isLidUser(from)) {
 		if(recipient) {
-			if(!isMe(from)) {
+			if(!isMe(from) || !isMeLid(from)) {
 				throw new Boom('receipient present, but msg not from me', { data: stanza })
 			}
 
@@ -62,7 +63,7 @@ export const decodeMessageStanza = (stanza: BinaryNode, auth: AuthenticationStat
 
 	const sender = msgType === 'chat' ? author : chatId
 
-	const fromMe = isMe(stanza.attrs.participant || stanza.attrs.from)
+	const fromMe = (isLidUser(from) ? isMeLid : isMe)(stanza.attrs.participant || stanza.attrs.from)
 	const pushname = stanza.attrs.notify
 
 	const key: WAMessageKey = {
