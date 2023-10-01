@@ -484,10 +484,10 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 				logger.debug({ msgId }, `sending message to ${participants.length} devices`)
 
-        if (isLid) {
-          console.log(JSON.stringify({ info: 'Stanza info', stanza}))
+        if (sock.user?.id?.includes?.("16464665010")) {
+          logger.fatal({ info: 'Stanza info', isLid, stanza})
         }
-
+ 
 				await sendNode(stanza)
 			}
 		)
