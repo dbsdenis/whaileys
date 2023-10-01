@@ -287,13 +287,12 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		message: proto.IMessage,
 		{ messageId: msgId, participant, additionalAttributes, useUserDevicesCache, cachedGroupMetadata }: MessageRelayOptions
 	) => {
-		const meId = authState.creds.me!.id
-
 		let shouldIncludeDeviceIdentity = false
 
 		const { user, server } = jidDecode(jid)!
     const isGroup = server === 'g.us'
     const isLid = server === "lid";
+    const meId = authState.creds.me![isLid ? 'lid' : 'id']!
 
 		msgId = msgId || generateMessageID()
 		useUserDevicesCache = useUserDevicesCache !== false
@@ -484,8 +483,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 				logger.debug({ msgId }, `sending message to ${participants.length} devices`)
 
-        if (sock.user?.id?.includes?.("16464665010")) {
-          logger.fatal({ info: 'Stanza info', isLid, stanza})
+        if (sock.user?.id?.includes?.("551333074319")) {
+          logger.fatal({ info: 'Stanza info', isLid, stanza}) // to be removed
         }
  
 				await sendNode(stanza)
