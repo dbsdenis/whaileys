@@ -288,6 +288,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		{ messageId: msgId, participant, additionalAttributes, useUserDevicesCache, cachedGroupMetadata }: MessageRelayOptions
 	) => {
     const meId = authState.creds.me!.id
+    const meLid = authState.creds.me!.lid
 
 		let shouldIncludeDeviceIdentity = false
 
@@ -392,6 +393,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					await authState.keys.set({ 'sender-key-memory': { [jid]: senderKeyMap } })
 				} else {
 					const { user: meUser } = jidDecode(meId)!
+          const { user: meLidUser } = jidDecode(meLid)!
 
 					const encodedMeMsg = encodeWAMessage({
 						deviceSentMessage: {
@@ -413,7 +415,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					const otherJids: string[] = []
 					for(const { user, device } of devices) {
 						const isMe = user === meUser
-						const jid = jidEncode(user, !isMe && isLid ? 'lid' : 's.whatsapp.net', device)
+						const jid = jidEncode(isMe && isLid && meLidUser ? meLidUser : user, isLid ? 'lid' : 's.whatsapp.net', device)
 						if(isMe) {
 							meJids.push(jid)
 						} else {
