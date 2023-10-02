@@ -1,6 +1,6 @@
 import { Boom } from '@hapi/boom'
 import { proto } from '../../WAProto'
-import { AuthenticationState, WAMessageKey } from '../Types'
+import { AuthenticationState, WAMessage, WAMessageKey } from '../Types'
 import { areJidsSameUser, BinaryNode, isJidBroadcast, isJidGroup, isJidStatusBroadcast, isJidUser, isLidUser } from '../WABinary'
 import { unpadRandomMax16 } from './generics'
 import { decryptGroupSignalProto, decryptSignalProto, processSenderKeyMessage } from './signal'
@@ -73,10 +73,12 @@ export const decodeMessageStanza = (stanza: BinaryNode, auth: AuthenticationStat
 		participant
 	}
 
-	const fullMessage: proto.IWebMessageInfo = {
+	const fullMessage: WAMessage = {
 		key,
 		messageTimestamp: +stanza.attrs.t,
-		pushName: pushname
+		pushName: pushname,
+    senderLid: stanza.attrs.sender_lid,
+    senderPn: stanza.attrs.sender_pn
 	}
 
 	if(key.fromMe) {
