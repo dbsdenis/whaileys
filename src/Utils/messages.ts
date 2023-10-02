@@ -373,7 +373,9 @@ export const generateWAMessageContent = async(
 				productImage: imageMessage,
 			}
 		})
-	} else {
+	} else if('requestPhoneNumber' in message) {
+		m.requestPhoneNumberMessage = {}
+  } else {
 		m = await prepareWAMessageMedia(
 			message,
 			options

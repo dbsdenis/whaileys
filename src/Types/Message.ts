@@ -82,6 +82,10 @@ type WithDimensions = {
     height?: number
 }
 
+type RequestPhoneNumber = {
+  requestPhoneNumber: boolean
+}
+
 export type MediaType = keyof typeof MEDIA_HKDF_KEY_MAPPING
 export type AnyMediaMessageContent = (
     ({
@@ -148,7 +152,7 @@ export type AnyRegularMessageContent = (
         businessOwnerJid?: string
         body?: string
         footer?: string
-    }
+    } | RequestPhoneNumber
 ) & ViewOnce
 
 export type AnyMessageContent = AnyRegularMessageContent | {
