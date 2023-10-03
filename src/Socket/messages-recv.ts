@@ -503,6 +503,11 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 
 	const handleMessage = async(node: BinaryNode) => {
 		const { fullMessage: msg, category, author, decryptionTask } = decodeMessageStanza(node, authState)
+
+    if(msg.message?.protocolMessage?.type === proto.Message.ProtocolMessage.Type.SHARE_PHONE_NUMBER && node.attrs.sender_pn) {
+      ev.emit('chats.phone-number-share', { lid: node.attrs.from, jid: node.attrs.sender_pn })
+		}
+
 		await Promise.all([
 			processingMutex.mutex(
 				async() => {
