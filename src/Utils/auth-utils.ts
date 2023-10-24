@@ -184,6 +184,7 @@ export const initAuthCreds = (): AuthenticationCreds => {
 	const identityKey = Curve.generateKeyPair()
 	return {
 		noiseKey: Curve.generateKeyPair(),
+    pairingEphemeralKeyPair: Curve.generateKeyPair(),
 		signedIdentityKey: identityKey,
 		signedPreKey: signedKeyPair(identityKey, 1),
 		registrationId: generateRegistrationId(),
@@ -194,6 +195,8 @@ export const initAuthCreds = (): AuthenticationCreds => {
 		accountSyncCounter: 0,
 		accountSettings: {
 			unarchiveChats: false
-		}
+		},
+    pairingCode: undefined,
+    registered: false
 	}
 }

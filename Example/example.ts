@@ -29,7 +29,7 @@ const startSock = async() => {
 	console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`)
 
 	const sock = makeWASocket({
-		version,
+		version: [2, 2329, 9],
 		logger,
 		printQRInTerminal: true,
 		auth: {
@@ -39,6 +39,8 @@ const startSock = async() => {
 		},
 		msgRetryCounterMap,
 		generateHighQualityLinkPreview: true,
+    shouldSyncHistoryMessage: () => false,
+    syncFullHistory: false,
 		// implement to handle retries
 		getMessage: async key => {
 			if(store) {
@@ -52,6 +54,9 @@ const startSock = async() => {
 			}
 		}
 	})
+
+
+
 
 	store?.bind(sock.ev)
 
@@ -87,6 +92,13 @@ const startSock = async() => {
 				}
 
 				console.log('connection update', update)
+
+        if (update.qr !== undefined && !sock.authState.creds.registered) {
+  
+          const code = await sock.requestPairingCode("551333074319")
+        
+          console.log("Paring code", code)
+        }
 			}
 
 			// credentials updated -- save them

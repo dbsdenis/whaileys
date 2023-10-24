@@ -4,9 +4,10 @@ import WebSocket from 'ws'
 import { proto } from '../../WAProto'
 import { DEF_CALLBACK_PREFIX, DEF_TAG_PREFIX, DEFAULT_ORIGIN, INITIAL_PREKEY_COUNT, MIN_PREKEY_COUNT } from '../Defaults'
 import { DisconnectReason, SocketConfig } from '../Types'
-import { addTransactionCapability, bindWaitForConnectionUpdate, configureSuccessfulPairing, Curve, generateLoginNode, generateMdTagPrefix, generateRegistrationNode, getCodeFromWSError, getErrorCodeFromStreamError, getNextPreKeysNode, makeNoiseHandler, printQRIfNecessaryListener, promiseTimeout } from '../Utils'
+import { addTransactionCapability, aesEncryptCTR, bindWaitForConnectionUpdate, bytesToCrockford, configureSuccessfulPairing, Curve, derivePairingCodeKey, generateLoginNode, generateMdTagPrefix, generateRegistrationNode, getCodeFromWSError, getErrorCodeFromStreamError, getNextPreKeysNode, makeNoiseHandler, printQRIfNecessaryListener, promiseTimeout } from '../Utils'
 import { makeEventBuffer } from '../Utils/event-buffer'
-import { assertNodeErrorFree, BinaryNode, encodeBinaryNode, getBinaryNodeChild, getBinaryNodeChildren, S_WHATSAPP_NET } from '../WABinary'
+import { assertNodeErrorFree, BinaryNode, encodeBinaryNode, getBinaryNodeChild, getBinaryNodeChildren, jidEncode, S_WHATSAPP_NET } from '../WABinary'
+import { randomBytes } from 'crypto'
 
 /**
  * Connects to WA servers and performs:
@@ -424,6 +425,75 @@ export const makeSocket = ({
 		end(new Boom(msg || 'Intentional Logout', { statusCode: DisconnectReason.loggedOut }))
 	}
 
+  const requestPairingCode = async(phoneNumber: string): Promise<string> => {
+		authState.creds.pairingCode = bytesToCrockford(randomBytes(5))
+		authState.creds.me = {
+			id: jidEncode(phoneNumber, 's.whatsapp.net'),
+			name: '~'
+		}
+		ev.emit('creds.update', authState.creds)
+
+		await sendNode({
+			tag: 'iq',
+			attrs: {
+				to: S_WHATSAPP_NET,
+				type: 'set',
+				id: generateMessageTag(),
+				xmlns: 'md'
+			},
+			content: [
+				{
+					tag: 'link_code_companion_reg',
+					attrs: {
+						jid: authState.creds.me.id,
+						stage: 'companion_hello',
+						// eslint-disable-next-line camelcase
+						should_show_push_notification: 'true'
+					},
+					content: [
+						{
+							tag: 'link_code_pairing_wrapped_companion_ephemeral_pub',
+							attrs: {},
+							content: await generatePairingKey()
+						},
+						{
+							tag: 'companion_server_auth_key_pub',
+							attrs: {},
+							content: authState.creds.noiseKey.public
+						},
+						{
+							tag: 'companion_platform_id',
+							attrs: {},
+							content: '49' // Chrome
+						},
+						{
+							tag: 'companion_platform_display',
+							attrs: {},
+							content: browser[0]
+						},
+						{
+							tag: 'link_code_pairing_nonce',
+							attrs: {},
+							content: '0'
+						}
+					]
+				}
+			]
+		})
+
+		return authState.creds.pairingCode
+	}
+
+	async function generatePairingKey() {
+		const salt = randomBytes(32)
+		const randomIv = randomBytes(16)
+		const key = derivePairingCodeKey(authState.creds.pairingCode!, salt)
+		const ciphered = aesEncryptCTR(authState.creds.pairingEphemeralKeyPair.public, key, randomIv)
+		return Buffer.concat([salt, randomIv, ciphered])
+	}
+
+	
+
 	ws.on('message', onMessageRecieved)
 	ws.on('open', validateConnection)
 	ws.on('error', error => end(
@@ -571,6 +641,7 @@ export const makeSocket = ({
 		end,
 		onUnexpectedError,
 		uploadPreKeys,
+    requestPairingCode,
 		/** Waits for the connection to WA to reach a state */
 		waitForConnectionUpdate: bindWaitForConnectionUpdate(ev),
 	}
