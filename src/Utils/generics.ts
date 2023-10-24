@@ -377,3 +377,27 @@ export function trimUndefineds(obj: any) {
 
 	return obj
 }
+
+export function bytesToCrockford(buffer: Buffer): string {
+  const CROCKFORD_CHARACTERS = '123456789ABCDEFGHJKLMNPQRSTVWXYZ'
+  
+	let value = 0
+	let bitCount = 0
+	const crockford: string[] = []
+
+	for(let i = 0; i < buffer.length; i++) {
+		value = (value << 8) | (buffer[i] & 0xff)
+		bitCount += 8
+
+		while(bitCount >= 5) {
+			crockford.push(CROCKFORD_CHARACTERS.charAt((value >>> (bitCount - 5)) & 31))
+			bitCount -= 5
+		}
+	}
+
+	if(bitCount > 0) {
+		crockford.push(CROCKFORD_CHARACTERS.charAt((value << (5 - bitCount)) & 31))
+	}
+
+	return crockford.join('')
+}
