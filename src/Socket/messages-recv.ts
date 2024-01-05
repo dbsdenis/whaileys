@@ -7,6 +7,7 @@ import {
   MessageUserReceipt,
   SocketConfig,
   WACallEvent,
+  WAMessage,
   WAMessageKey,
   WAMessageStubType,
   WAPatchName
@@ -21,6 +22,9 @@ import {
   derivePairingCodeKey,
   encodeBigEndian,
   encodeSignedDeviceIdentity,
+  encodeWAMessage,
+  encryptSignalProto,
+  generateMessageID,
   getCallStatusFromNode,
   getHistoryMsg,
   getNextPreKeys,
@@ -765,6 +769,65 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
     ]);
   };
 
+  const fetchMessageHistory = async (count: number, oldestMsg: WAMessage) => {
+    if(!authState.creds.me?.id) {
+      return new Error("not authenticated");
+    }
+
+    const protocolMessage: proto.IMessage = {
+      protocolMessage: {
+        peerDataOperationRequestMessage: {
+          historySyncOnDemandRequest: {
+            chatJid: oldestMsg.key.remoteJid,
+            oldestMsgFromMe: oldestMsg.key.fromMe,
+            oldestMsgId: oldestMsg.key.id,
+            oldestMsgTimestampMs: oldestMsg.messageTimestamp,
+            onDemandMsgCount: count
+          },
+          peerDataOperationRequestType:
+            proto.Message.PeerDataOperationRequestType.HISTORY_SYNC_ON_DEMAND
+        },
+        type: proto.Message.ProtocolMessage.Type
+          .PEER_DATA_OPERATION_REQUEST_MESSAGE
+      },
+      messageContextInfo: {
+        deviceListMetadata: {},
+        deviceListMetadataVersion: 2
+      }
+    };
+    const messageBuffer = encodeWAMessage(protocolMessage);
+
+    const meJid = jidDecode(authState.creds.me.id)!;
+
+    const { type, ciphertext } = await encryptSignalProto(
+      meJid?.user,
+      messageBuffer,
+      authState
+    );
+
+    const message: BinaryNode = {
+      tag: "message",
+      attrs: {
+        to: `${meJid?.user}@s.whatsapp.net`,
+        category: "peer",
+        push_priority: "high_force",
+        id: generateMessageID(),
+        type: "text"
+      },
+      content: [
+        {
+          tag: "enc",
+          attrs: {
+            type,
+            v: "2"
+          },
+          content: ciphertext
+        }
+      ]
+    };
+    return sendNode(message);
+  };
+
   const handleCall = async (node: BinaryNode) => {
     const { attrs } = node;
     const [infoChild] = getAllBinaryNodeChildren(node);
@@ -922,6 +985,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
     ...sock,
     sendMessageAck,
     sendRetryRequest,
-    rejectCall
+    rejectCall,
+    fetchMessageHistory
   };
 };
