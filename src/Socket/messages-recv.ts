@@ -770,7 +770,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
   };
 
   const fetchMessageHistory = async (count: number, oldestMsg: WAMessage) => {
-    if(!authState.creds.me?.id) {
+    if (!authState.creds.me?.id) {
       return new Error("not authenticated");
     }
 
@@ -798,6 +798,8 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
     const messageBuffer = encodeWAMessage(protocolMessage);
 
     const meJid = jidDecode(authState.creds.me.id)!;
+
+    await assertSessions([`${meJid?.user}:0@s.whatsapp.net`], true);
 
     const { type, ciphertext } = await encryptSignalProto(
       meJid?.user,
