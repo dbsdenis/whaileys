@@ -658,7 +658,11 @@ export const makeSocket = ({
     clearTimeout(qrTimer); // will never happen in all likelyhood -- but just in case WA sends success on first try
 
     ev.emit("creds.update", {
-      me: { id: authState.creds.me!.id, lid: node.attrs.lid }
+      me: {
+        ...authState.creds.me,
+        id: authState.creds.me!.id,
+        lid: node.attrs.lid
+      }
     });
     ev.emit("connection.update", { connection: "open" });
   });
