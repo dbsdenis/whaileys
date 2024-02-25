@@ -794,11 +794,11 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
     return sendPeerDataOperationMessage(pdoMessage);
   };
 
-  const requestPlaceholderMessageResend = async (
+  const requestPlaceholderResend = async (
     messageKeys: WAMessageKey[]
   ): Promise<string> => {
     if (!authState.creds.me?.id) {
-      throw "not authenticated, to make a fetchPlaceholderMessage";
+      throw "not authenticated, to make a requestPlaceholderResend";
     }
 
     const pdoMessage = {
@@ -970,6 +970,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
     sendMessageAck,
     sendRetryRequest,
     rejectCall,
-    fetchMessageHistory
+    fetchMessageHistory,
+    requestPlaceholderResend
   };
 };
