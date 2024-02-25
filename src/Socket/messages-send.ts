@@ -312,6 +312,58 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     return didFetchNewSession;
   };
 
+  const sendPeerDataOperationMessage = async (
+    pdoMessage: proto.Message.IPeerDataOperationRequestMessage
+  ): Promise<string> => {
+    if (!authState.creds.me?.id) {
+      throw "not authenticated, to send a peer data operation request";
+    }
+
+    const protocolMessage: proto.IMessage = {
+      protocolMessage: {
+        peerDataOperationRequestMessage: pdoMessage,
+        type: proto.Message.ProtocolMessage.Type
+          .PEER_DATA_OPERATION_REQUEST_MESSAGE
+      },
+      messageContextInfo: {
+        deviceListMetadata: {},
+        deviceListMetadataVersion: 2
+      }
+    };
+    const messageBuffer = encodeWAMessage(protocolMessage);
+
+    const meJid = jidDecode(authState.creds.me.id)!;
+
+    const { type, ciphertext } = await encryptSignalProto(
+      meJid?.user,
+      messageBuffer,
+      authState
+    );
+
+    const message: BinaryNode = {
+      tag: "message",
+      attrs: {
+        to: `${meJid?.user}@s.whatsapp.net`,
+        category: "peer",
+        push_priority: "high_force",
+        id: generateMessageID(),
+        type: "text"
+      },
+      content: [
+        {
+          tag: "enc",
+          attrs: {
+            type,
+            v: "2"
+          },
+          content: ciphertext
+        }
+      ]
+    };
+    await sendNode(message);
+    return message.attrs.id;
+  };
+
   const createParticipantNodes = async (
     jids: string[],
     bytes: Buffer,
@@ -649,6 +701,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     refreshMediaConn,
     waUploadToServer,
     fetchPrivacySettings,
+    sendPeerDataOperationMessage,
     updateMediaMessage: async (message: proto.IWebMessageInfo) => {
       const content = assertMediaContent(message.message);
       const mediaKey = content.mediaKey!;

@@ -69,7 +69,8 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
     sendNode,
     relayMessage,
     sendReceipt,
-    uploadPreKeys
+    uploadPreKeys,
+    sendPeerDataOperationMessage
   } = sock;
 
   /** this mutex ensures that each retryRequest will wait for the previous one to finish */
@@ -771,65 +772,44 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 
   const fetchMessageHistory = async (
     count: number,
-    oldestMsg: WAMessage
+    oldestMsgKey: WAMessageKey,
+    oldestMsgTimestamp: number | Long
   ): Promise<string> => {
     if (!authState.creds.me?.id) {
       throw "not authenticated, to make a fetchMessageHistory";
     }
 
-    const protocolMessage: proto.IMessage = {
-      protocolMessage: {
-        peerDataOperationRequestMessage: {
-          historySyncOnDemandRequest: {
-            chatJid: oldestMsg.key.remoteJid,
-            oldestMsgFromMe: oldestMsg.key.fromMe,
-            oldestMsgId: oldestMsg.key.id,
-            oldestMsgTimestampMs: oldestMsg.messageTimestamp,
-            onDemandMsgCount: count
-          },
-          peerDataOperationRequestType:
-            proto.Message.PeerDataOperationRequestType.HISTORY_SYNC_ON_DEMAND
-        },
-        type: proto.Message.ProtocolMessage.Type
-          .PEER_DATA_OPERATION_REQUEST_MESSAGE
+    const pdoMessage = {
+      historySyncOnDemandRequest: {
+        chatJid: oldestMsgKey.remoteJid,
+        oldestMsgFromMe: oldestMsgKey.fromMe,
+        oldestMsgId: oldestMsgKey.id,
+        oldestMsgTimestampMs: oldestMsgTimestamp,
+        onDemandMsgCount: count
       },
-      messageContextInfo: {
-        deviceListMetadata: {},
-        deviceListMetadataVersion: 2
-      }
+      peerDataOperationRequestType:
+        proto.Message.PeerDataOperationRequestType.HISTORY_SYNC_ON_DEMAND
     };
-    const messageBuffer = encodeWAMessage(protocolMessage);
 
-    const meJid = jidDecode(authState.creds.me.id)!;
+    return sendPeerDataOperationMessage(pdoMessage);
+  };
 
-    const { type, ciphertext } = await encryptSignalProto(
-      meJid?.user,
-      messageBuffer,
-      authState
-    );
+  const requestPlaceholderMessageResend = async (
+    messageKeys: WAMessageKey[]
+  ): Promise<string> => {
+    if (!authState.creds.me?.id) {
+      throw "not authenticated, to make a fetchPlaceholderMessage";
+    }
 
-    const message: BinaryNode = {
-      tag: "message",
-      attrs: {
-        to: `${meJid?.user}@s.whatsapp.net`,
-        category: "peer",
-        push_priority: "high_force",
-        id: generateMessageID(),
-        type: "text"
-      },
-      content: [
-        {
-          tag: "enc",
-          attrs: {
-            type,
-            v: "2"
-          },
-          content: ciphertext
-        }
-      ]
+    const pdoMessage = {
+      placeholderMessageResendRequest: messageKeys.map(a => ({
+        messageKey: a
+      })),
+      peerDataOperationRequestType:
+        proto.Message.PeerDataOperationRequestType.PLACEHOLDER_MESSAGE_RESEND
     };
-    await sendNode(message);
-    return message.attrs.id;
+
+    return sendPeerDataOperationMessage(pdoMessage);
   };
 
   const handleCall = async (node: BinaryNode) => {
