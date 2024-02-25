@@ -190,6 +190,31 @@ const processMessage = async (
           ephemeralExpiration: protocolMsg.ephemeralExpiration || null
         });
         break;
+      case proto.Message.ProtocolMessage.Type
+        .PEER_DATA_OPERATION_REQUEST_RESPONSE_MESSAGE:
+        const response = protocolMsg.peerDataOperationRequestResponseMessage!;
+        if (response) {
+          const { peerDataOperationResult } = response;
+          for (const result of peerDataOperationResult!) {
+            const { placeholderMessageResendResponse: retryResponse } = result;
+            if (retryResponse) {
+              const webMessageInfo = proto.WebMessageInfo.decode(
+                retryResponse.webMessageInfoBytes!
+              );
+              ev.emit("messages.update", [
+                {
+                  key: webMessageInfo.key,
+                  update: {
+                    message: webMessageInfo.message,
+                    messageStubParameters: ["pdo_placeholder_resend_response"]
+                  }
+                }
+              ]);
+            }
+          }
+        }
+
+        break;
     }
   } else if (content?.reactionMessage) {
     const reaction: proto.IReaction = {
