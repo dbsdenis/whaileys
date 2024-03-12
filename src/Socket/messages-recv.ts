@@ -99,8 +99,12 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
       stanza.attrs.recipient = attrs.recipient;
     }
 
-    if (tag !== "message" && attrs.type) {
+    if (!!attrs.type) {
       stanza.attrs.type = attrs.type;
+    }
+
+    if (tag === "message") {
+      stanza.attrs.from = authState.creds.me!.id;
     }
 
     logger.debug({ recv: { tag, attrs }, sent: stanza.attrs }, "sent ack");
@@ -164,9 +168,9 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
           {
             tag: "retry",
             attrs: {
-              count: retryCount.toString(),
-              id: node.attrs.id,
-              t: node.attrs.t,
+              count: retryCount as any,
+              id: node.attrs.id.toString(),
+              t: node.attrs.t.toString(),
               v: "1"
             }
           },
@@ -691,6 +695,20 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
   };
 
   const handleMessage = async (node: BinaryNode) => {
+    if (
+      getBinaryNodeChild(node, "unavailable") &&
+      !getBinaryNodeChild(node, "enc")
+    ) {
+      // "missing message from node" fix
+      logger.fatal({
+        type: "missing",
+        id: node.attrs.id,
+        message: "missing body; sending ack then ignoring."
+      });
+      await sendMessageAck(node);
+      return;
+    }
+
     const {
       fullMessage: msg,
       category,
