@@ -101,7 +101,8 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 
     if (
       !!attrs.type &&
-      getBinaryNodeChild({ tag, attrs, content }, "unavailable")
+      (tag !== "message" ||
+        getBinaryNodeChild({ tag, attrs, content }, "unavailable"))
     ) {
       stanza.attrs.type = attrs.type;
     }
