@@ -81,7 +81,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 
   let sendActiveReceipts = false;
 
-  const sendMessageAck = async ({ tag, attrs }: BinaryNode) => {
+  const sendMessageAck = async ({ tag, attrs, content }: BinaryNode) => {
     const stanza: BinaryNode = {
       tag: "ack",
       attrs: {
@@ -99,11 +99,17 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
       stanza.attrs.recipient = attrs.recipient;
     }
 
-    if (!!attrs.type) {
+    if (
+      !!attrs.type &&
+      getBinaryNodeChild({ tag, attrs, content }, "unavailable")
+    ) {
       stanza.attrs.type = attrs.type;
     }
 
-    if (tag === "message") {
+    if (
+      tag === "message" &&
+      getBinaryNodeChild({ tag, attrs, content }, "unavailable")
+    ) {
       stanza.attrs.from = authState.creds.me!.id;
     }
 
