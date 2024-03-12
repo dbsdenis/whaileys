@@ -700,7 +700,11 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
       !getBinaryNodeChild(node, "enc")
     ) {
       // "missing message from node" fix
-      console.log(node.attrs.id, "missing body; sending ack then ignoring.");
+      logger.fatal({
+        type: "missing",
+        id: node.attrs.id,
+        message: "missing body; sending ack then ignoring."
+      });
       await sendMessageAck(node);
       return;
     }
