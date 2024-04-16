@@ -702,20 +702,6 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
   };
 
   const handleMessage = async (node: BinaryNode) => {
-    if (
-      getBinaryNodeChild(node, "unavailable") &&
-      !getBinaryNodeChild(node, "enc")
-    ) {
-      // "missing message from node" fix
-      logger.fatal({
-        type: "missing",
-        id: node.attrs.id,
-        message: "missing body; sending ack then ignoring."
-      });
-      await sendMessageAck(node);
-      return;
-    }
-
     const {
       fullMessage: msg,
       category,
