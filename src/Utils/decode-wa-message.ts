@@ -10,7 +10,7 @@ import {
   isJidUser,
   isLidUser
 } from "../WABinary";
-import { unpadRandomMax16 } from "./generics";
+import { BufferJSON, unpadRandomMax16 } from "./generics";
 import {
   decryptGroupSignalProto,
   decryptSignalProto,
@@ -191,7 +191,7 @@ export const decodeMessageStanza = (
       // if nothing was found to decrypt
       if (!decryptables) {
         fullMessage.messageStubType = proto.WebMessageInfo.StubType.CIPHERTEXT;
-        fullMessage.messageStubParameters = [NO_MESSAGE_FOUND_ERROR_TEXT];
+        fullMessage.messageStubParameters = [NO_MESSAGE_FOUND_ERROR_TEXT, JSON.stringify(stanza, BufferJSON.replacer)];
       }
     })()
   };
