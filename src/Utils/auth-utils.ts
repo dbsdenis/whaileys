@@ -214,6 +214,7 @@ export const initAuthCreds = (): AuthenticationCreds => {
       unarchiveChats: false
     },
     pairingCode: undefined,
-    registered: false
+    registered: false,
+    lastPropHash: undefined
   };
 };

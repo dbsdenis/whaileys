@@ -63,6 +63,7 @@ export type AuthenticationCreds = SignalCreds & {
   accountSettings: AccountSettings;
   pairingCode: string | undefined;
   registered: boolean;
+  lastPropHash: string | undefined;
 };
 
 export type SignalDataTypeMap = {
