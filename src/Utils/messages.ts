@@ -567,7 +567,7 @@ export const generateWAMessageFromContent = (
     key: {
       remoteJid: jid,
       fromMe: true,
-      id: options?.messageId || generateMessageIDV2(sock.user?.id)
+      id: options?.messageId || generateMessageIDV2()
     },
     message: message,
     messageTimestamp: timestamp,
