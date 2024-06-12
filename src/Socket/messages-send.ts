@@ -804,7 +804,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
             ),
           upload: waUploadToServer,
           mediaCache: config.mediaCache,
-          messageId: generateMessageIDV2(sock.user?.id)
+          messageId: generateMessageIDV2(sock.user?.id),
           ...options
         });
         const isDeleteMsg = "delete" in content && !!content.delete;
