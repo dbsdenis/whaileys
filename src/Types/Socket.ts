@@ -71,6 +71,13 @@ export type SocketConfig = {
    * */
   generateHighQualityLinkPreview: boolean;
 
+  /**
+   * Returns if a jid should be ignored,
+   * no event for that jid will be triggered.
+   * Messages from that jid will also not be decrypted
+   * */
+  shouldIgnoreJid: (jid: string) => boolean | undefined;
+
   /** options for axios */
   options: AxiosRequestConfig<any>;
   /**
