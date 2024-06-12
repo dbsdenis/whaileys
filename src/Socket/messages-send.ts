@@ -22,7 +22,7 @@ import {
   encryptSenderKeyMsgSignalProto,
   encryptSignalProto,
   extractDeviceJids,
-  generateMessageID,
+  generateMessageIDV2,
   generateWAMessage,
   getStatusCodeForMediaRetry,
   getUrlFromDirectPath,
@@ -346,7 +346,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
         to: `${meJid?.user}@s.whatsapp.net`,
         category: "peer",
         push_priority: "high_force",
-        id: generateMessageID(),
+        id: generateMessageIDV2(sock.user?.id),
         type: "text"
       },
       content: [
@@ -422,7 +422,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     const isGroup = server === "g.us";
     const isLid = server === "lid";
 
-    msgId = msgId || generateMessageID();
+    msgId = msgId || generateMessageIDV2(sock.user?.id);
     useUserDevicesCache = useUserDevicesCache !== false;
 
     const encodedMsg = encodeWAMessage(message);

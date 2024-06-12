@@ -29,7 +29,7 @@ import {
   WATextMessage
 } from "../Types";
 import { isJidGroup, jidNormalizedUser } from "../WABinary";
-import { generateMessageID, unixTimestampSeconds } from "./generics";
+import { generateMessageIDV2, unixTimestampSeconds } from "./generics";
 import {
   downloadContentFromMessage,
   encryptedStream,
@@ -567,7 +567,7 @@ export const generateWAMessageFromContent = (
     key: {
       remoteJid: jid,
       fromMe: true,
-      id: options?.messageId || generateMessageID()
+      id: options?.messageId || generateMessageIDV2(sock.user?.id)
     },
     message: message,
     messageTimestamp: timestamp,

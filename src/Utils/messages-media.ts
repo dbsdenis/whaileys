@@ -328,9 +328,6 @@ export const encryptedStream = async (
 
   const mediaKey = Crypto.randomBytes(32);
   const { cipherKey, iv, macKey } = getMediaKeys(mediaKey, mediaType);
-  // random name
-  //const encBodyPath = join(getTmpFilesDirectory(), mediaType + generateMessageID() + '.enc')
-  // const encWriteStream = createWriteStream(encBodyPath)
   const encWriteStream = new Readable({ read: () => {} });
 
   let bodyPath: string | undefined;
