@@ -54,7 +54,7 @@ import { makeMessagesSocket } from "./messages-send";
 import { randomBytes } from "crypto";
 
 export const makeMessagesRecvSocket = (config: SocketConfig) => {
-  const { logger, retryRequestDelayMs, getMessage } = config;
+  const { logger, retryRequestDelayMs, getMessage, shouldIgnoreJid } = config;
   const sock = makeMessagesSocket(config);
   const {
     ev,
@@ -593,6 +593,12 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
       !isNodeFromMe || isJidGroup(attrs.from) ? attrs.from : attrs.recipient;
     const fromMe = !attrs.recipient || (attrs.type === "retry" && isNodeFromMe);
 
+    if (shouldIgnoreJid(remoteJid) && remoteJid !== "@s.whatsapp.net") {
+      logger.debug({ remoteJid }, "ignoring receipt from jid");
+      await sendMessageAck(node);
+      return;
+    }
+
     const ids = [attrs.id];
     if (Array.isArray(content)) {
       const items = getBinaryNodeChildren(content[0], "item");
@@ -675,6 +681,13 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 
   const handleNotification = async (node: BinaryNode) => {
     const remoteJid = node.attrs.from;
+
+    if (shouldIgnoreJid(remoteJid) && remoteJid !== "@s.whatsapp.net") {
+      logger.debug({ remoteJid, id: node.attrs.id }, "ignored notification");
+      await sendMessageAck(node);
+      return;
+    }
+
     await Promise.all([
       processingMutex.mutex(async () => {
         const msg = await processNotification(node);
@@ -702,6 +715,15 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
   };
 
   const handleMessage = async (node: BinaryNode) => {
+    if (
+      shouldIgnoreJid(node.attrs.from!) &&
+      node.attrs.from! !== "@s.whatsapp.net"
+    ) {
+      logger.debug({ key: node.attrs.key }, "ignored message");
+      await sendMessageAck(node);
+      return;
+    }
+
     const {
       fullMessage: msg,
       category,

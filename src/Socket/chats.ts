@@ -47,6 +47,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
     logger,
     markOnlineOnConnect,
     shouldSyncHistoryMessage,
+    shouldIgnoreJid,
     fireInitQueries
   } = config;
   const sock = makeSocket(config);
@@ -572,6 +573,11 @@ export const makeChatsSocket = (config: SocketConfig) => {
     let presence: PresenceData | undefined;
     const jid = attrs.from;
     const participant = attrs.participant || attrs.from;
+
+    if (shouldIgnoreJid(jid) && jid !== "@s.whatsapp.net") {
+      return;
+    }
+
     if (tag === "presence") {
       presence = {
         lastKnownPresence:
@@ -692,36 +698,38 @@ export const makeChatsSocket = (config: SocketConfig) => {
   };
 
   /** sending non-abt props may fix QR scan fail if server expects */
-	const fetchProps = async() => {
-		const resultNode = await query({
-			tag: 'iq',
-			attrs: {
-				to: S_WHATSAPP_NET,
-				xmlns: 'w',
-				type: 'get',
-			},
-			content: [
-				{ tag: 'props', attrs: {
-					protocol: '2',
-					hash: authState?.creds?.lastPropHash || "" 
-				} }
-			]
-		})
+  const fetchProps = async () => {
+    const resultNode = await query({
+      tag: "iq",
+      attrs: {
+        to: S_WHATSAPP_NET,
+        xmlns: "w",
+        type: "get"
+      },
+      content: [
+        {
+          tag: "props",
+          attrs: {
+            protocol: "2",
+            hash: authState?.creds?.lastPropHash || ""
+          }
+        }
+      ]
+    });
 
-		const propsNode = getBinaryNodeChild(resultNode, 'props')
-		
-		
-		let props: { [_: string]: string } = {}
-		if(propsNode) {
-			authState.creds.lastPropHash = propsNode?.attrs?.hash
-			ev.emit('creds.update', authState.creds)
-			props = reduceBinaryNodeToDictionary(propsNode, 'prop')
-		}
+    const propsNode = getBinaryNodeChild(resultNode, "props");
 
-		logger.debug('fetched props')
+    let props: { [_: string]: string } = {};
+    if (propsNode) {
+      authState.creds.lastPropHash = propsNode?.attrs?.hash;
+      ev.emit("creds.update", authState.creds);
+      props = reduceBinaryNodeToDictionary(propsNode, "prop");
+    }
 
-		return props
-	}
+    logger.debug("fetched props");
+
+    return props;
+  };
 
   /**
    * modify a chat -- mark unread, read etc.
@@ -738,11 +746,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
    * help ensure parity with WA Web
    * */
   const executeInitQueries = async () => {
-    await Promise.all([
-      fetchProps(),
-      fetchBlocklist(),
-      fetchPrivacySettings()
-    ]);
+    await Promise.all([fetchProps(), fetchBlocklist(), fetchPrivacySettings()]);
   };
 
   const upsertMessage = ev.createBufferedFunction(
