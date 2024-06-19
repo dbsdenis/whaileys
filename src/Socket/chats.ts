@@ -97,7 +97,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
   /** helper function to run a generic IQ query */
   const interactiveQuery = async (
     userNodes: BinaryNode[],
-    queryNode: BinaryNode
+    ...queryNode: BinaryNode[]
   ) => {
     const result = await query({
       tag: "iq",
@@ -120,7 +120,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
             {
               tag: "query",
               attrs: {},
-              content: [queryNode]
+              content: [...queryNode]
             },
             {
               tag: "list",
@@ -141,24 +141,30 @@ export const makeChatsSocket = (config: SocketConfig) => {
 
   const onWhatsApp = async (...jids: string[]) => {
     const results = await interactiveQuery(
-      [
-        {
-          tag: "user",
-          attrs: {},
-          content: jids.map(jid => ({
+      jids.map(jid => ({
+        tag: "user",
+        attrs: {},
+        content: [
+          {
             tag: "contact",
             attrs: {},
-            content: `+${jid}`
-          }))
-        }
-      ],
-      { tag: "contact", attrs: {} }
+            content: Buffer.from(`+${jid}`)
+          }
+        ]
+      })),
+      { tag: "contact", attrs: {} },
+      { tag: "lid", attrs: {} }
     );
 
     return results
       .map(user => {
         const contact = getBinaryNodeChild(user, "contact");
-        return { exists: contact?.attrs.type === "in", jid: user.attrs.jid };
+        const lid = getBinaryNodeChild(user, "lid");
+        return {
+          exists: contact?.attrs.type === "in",
+          jid: user.attrs.jid,
+          lid: lid?.attrs.val
+        };
       })
       .filter(item => item.exists);
   };
