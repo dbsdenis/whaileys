@@ -693,6 +693,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
   return {
     ...sock,
     getPrivacyTokens,
+    getUSyncDevices,
     assertSessions,
     relayMessage,
     sendReceipt,
