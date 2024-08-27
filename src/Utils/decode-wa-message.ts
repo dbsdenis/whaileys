@@ -6,11 +6,12 @@ import {
   BinaryNode,
   isJidBroadcast,
   isJidGroup,
+  isJidNewsletter,
   isJidStatusBroadcast,
   isJidUser,
   isLidUser
 } from "../WABinary";
-import { BufferJSON, unpadRandomMax16 } from "./generics";
+import { unpadRandomMax16 } from "./generics";
 import {
   decryptGroupSignalProto,
   decryptSignalProto,
@@ -25,7 +26,8 @@ type MessageType =
   | "other_broadcast"
   | "group"
   | "direct_peer_status"
-  | "other_status";
+  | "other_status"
+  | "newsletter";
 
 export const decodeMessageStanza = (
   stanza: BinaryNode,
@@ -80,6 +82,10 @@ export const decodeMessageStanza = (
 
     chatId = from;
     author = participant;
+  } else if (isJidNewsletter(from)) {
+    msgType = "newsletter";
+    chatId = from;
+    author = from;
   } else {
     throw new Boom("Unknown message type", { data: stanza });
   }
@@ -126,7 +132,7 @@ export const decodeMessageStanza = (
             fullMessage.verifiedBizName = details.verifiedName;
           }
 
-          if (tag !== "enc") {
+          if (tag !== "enc" && tag !== "plaintext") {
             continue;
           }
 
@@ -139,7 +145,7 @@ export const decodeMessageStanza = (
           let msgBuffer: Buffer;
 
           try {
-            const e2eType = attrs.type;
+            const e2eType = tag === "plaintext" ? "plaintext" : attrs.type;
             switch (e2eType) {
               case "skmsg":
                 msgBuffer = await decryptGroupSignalProto(
@@ -159,13 +165,17 @@ export const decodeMessageStanza = (
                   auth
                 );
                 break;
+              case "plaintext":
+                msgBuffer = content as Buffer;
+                break;
               default:
                 throw new Error(`Unknown e2e type: ${e2eType}`);
             }
 
             let msg: proto.IMessage = proto.Message.decode(
-              unpadRandomMax16(msgBuffer)
+              e2eType !== "plaintext" ? unpadRandomMax16(msgBuffer) : msgBuffer
             );
+
             msg = msg.deviceSentMessage?.message || msg;
             if (msg.senderKeyDistributionMessage) {
               await processSenderKeyMessage(
@@ -191,7 +201,7 @@ export const decodeMessageStanza = (
       // if nothing was found to decrypt
       if (!decryptables) {
         fullMessage.messageStubType = proto.WebMessageInfo.StubType.CIPHERTEXT;
-        fullMessage.messageStubParameters = [NO_MESSAGE_FOUND_ERROR_TEXT, JSON.stringify(stanza, BufferJSON.replacer)];
+        fullMessage.messageStubParameters = [NO_MESSAGE_FOUND_ERROR_TEXT];
       }
     })()
   };

@@ -316,7 +316,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     pdoMessage: proto.Message.IPeerDataOperationRequestMessage
   ): Promise<string> => {
     if (!authState.creds.me?.id) {
-      throw "not authenticated, to send a peer data operation request";
+      throw new Boom("Not authenticated");
     }
 
     const protocolMessage: proto.IMessage = {
@@ -324,44 +324,20 @@ export const makeMessagesSocket = (config: SocketConfig) => {
         peerDataOperationRequestMessage: pdoMessage,
         type: proto.Message.ProtocolMessage.Type
           .PEER_DATA_OPERATION_REQUEST_MESSAGE
-      },
-      messageContextInfo: {
-        deviceListMetadata: {},
-        deviceListMetadataVersion: 2
       }
     };
-    const messageBuffer = encodeWAMessage(protocolMessage);
 
-    const meJid = jidDecode(authState.creds.me.id)!;
+    const meJid = jidNormalizedUser(authState.creds.me.id);
 
-    const { type, ciphertext } = await encryptSignalProto(
-      meJid?.user,
-      messageBuffer,
-      authState
-    );
-
-    const message: BinaryNode = {
-      tag: "message",
-      attrs: {
-        to: `${meJid?.user}@s.whatsapp.net`,
+    const msgId = await relayMessage(meJid, protocolMessage, {
+      additionalAttributes: {
         category: "peer",
-        push_priority: "high_force",
-        id: generateMessageIDV2(sock.user?.id),
-        type: "text"
-      },
-      content: [
-        {
-          tag: "enc",
-          attrs: {
-            type,
-            v: "2"
-          },
-          content: ciphertext
-        }
-      ]
-    };
-    await sendNode(message);
-    return message.attrs.id;
+        // eslint-disable-next-line camelcase
+        push_priority: "high_force"
+      }
+    });
+
+    return msgId;
   };
 
   const createParticipantNodes = async (
@@ -604,11 +580,18 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       }
 
       if (participants.length) {
-        binaryNodeContent.push({
-          tag: "participants",
-          attrs: {},
-          content: participants
-        });
+        if (additionalAttributes?.["category"] === "peer") {
+          const peerNode = participants[0]?.content?.[0] as BinaryNode;
+          if (peerNode) {
+            binaryNodeContent.push(peerNode);
+          }
+        } else {
+          binaryNodeContent.push({
+            tag: "participants",
+            attrs: {},
+            content: participants
+          });
+        }
       }
 
       const stanza: BinaryNode = {

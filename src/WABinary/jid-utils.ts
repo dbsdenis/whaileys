@@ -53,7 +53,7 @@ export const jidDecode = (jid: string | undefined): FullJid | undefined => {
   };
 };
 
-/** is the jid a user */
+/** is jid the same user */
 export const areJidsSameUser = (
   jid1: string | undefined,
   jid2: string | undefined
@@ -68,7 +68,10 @@ export const isJidBroadcast = (jid: string | undefined) =>
 export const isJidGroup = (jid: string | undefined) => jid?.endsWith("@g.us");
 /** is the jid the status broadcast */
 export const isJidStatusBroadcast = (jid: string) => jid === "status@broadcast";
-/** is the jid a group */
+/** is the jid a newsletter */
+export const isJidNewsletter = (jid: string | undefined) =>
+  jid?.endsWith("@newsletter");
+/** is the jid a hidden number user */
 export const isLidUser = (jid: string | undefined) => jid?.endsWith("@lid");
 
 export const jidNormalizedUser = (jid: string | undefined) => {
