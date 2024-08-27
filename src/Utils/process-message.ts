@@ -124,18 +124,30 @@ const processMessage = async (
         );
 
         if (process) {
+          if (
+            histNotification.syncType !==
+            proto.HistorySync.HistorySyncType.ON_DEMAND
+          ) {
+            ev.emit("creds.update", {
+              processedHistoryMessages: [
+                ...(creds.processedHistoryMessages || []),
+                { key: message.key, messageTimestamp: message.messageTimestamp }
+              ]
+            });
+          }
+
           const data = await downloadAndProcessHistorySyncNotification(
             histNotification,
             options
           );
 
-          ev.emit("messaging-history.set", { ...data, isLatest });
-
-          ev.emit("creds.update", {
-            processedHistoryMessages: [
-              ...(creds.processedHistoryMessages || []),
-              { key: message.key, messageTimestamp: message.messageTimestamp }
-            ]
+          ev.emit("messaging-history.set", {
+            ...data,
+            isLatest:
+              histNotification.syncType !==
+              proto.HistorySync.HistorySyncType.ON_DEMAND
+                ? isLatest
+                : false
           });
         }
 
@@ -201,15 +213,12 @@ const processMessage = async (
               const webMessageInfo = proto.WebMessageInfo.decode(
                 retryResponse.webMessageInfoBytes!
               );
-              ev.emit("messages.update", [
-                {
-                  key: webMessageInfo.key,
-                  update: {
-                    message: webMessageInfo.message,
-                    messageStubParameters: ["pdo_placeholder_resend_response"]
-                  }
-                }
-              ]);
+
+              ev.emit("messages.upsert", {
+                messages: [webMessageInfo],
+                type: "append",
+                isPlaceholderMessageResendResponse: true
+              });
             }
           }
         }

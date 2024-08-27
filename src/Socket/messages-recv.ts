@@ -806,7 +806,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
     oldestMsgTimestamp: number | Long
   ): Promise<string> => {
     if (!authState.creds.me?.id) {
-      throw "not authenticated, to make a fetchMessageHistory";
+      throw new Boom("Not authenticated");
     }
 
     const pdoMessage = {
@@ -825,16 +825,16 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
   };
 
   const requestPlaceholderResend = async (
-    messageKeys: WAMessageKey[]
+    messageKey: WAMessageKey
   ): Promise<string> => {
-    if (!authState.creds.me?.id) {
-      throw "not authenticated, to make a requestPlaceholderResend";
-    }
+    if (!authState.creds.me?.id) throw new Boom("Not authenticated");
 
     const pdoMessage = {
-      placeholderMessageResendRequest: messageKeys.map(a => ({
-        messageKey: a
-      })),
+      placeholderMessageResendRequest: [
+        {
+          messageKey
+        }
+      ],
       peerDataOperationRequestType:
         proto.Message.PeerDataOperationRequestType.PLACEHOLDER_MESSAGE_RESEND
     };
