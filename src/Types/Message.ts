@@ -11,6 +11,7 @@ export { proto as WAProto };
 export type WAMessage = proto.IWebMessageInfo & {
   senderLid?: string | undefined;
   senderPn?: string | undefined;
+  isPlaceholderMessageResend?: boolean;
 };
 export type WAMessageContent = proto.IMessage;
 export type WAContactMessage = proto.Message.IContactMessage;
