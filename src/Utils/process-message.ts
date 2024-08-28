@@ -215,9 +215,8 @@ const processMessage = async (
               );
 
               ev.emit("messages.upsert", {
-                messages: [webMessageInfo],
-                type: "append",
-                isPlaceholderMessageResendResponse: true
+                messages: [{...webMessageInfo, isPlaceholderMessageResend: true}],
+                type: "notify",
               });
             }
           }
