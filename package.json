@@ -1,6 +1,6 @@
 {
   "name": "@whaticket/baileys",
-  "version": "5.8.4",
+  "version": "5.8.5",
   "description": "WhatsApp API",
   "homepage": "https://github.com/whaticket/baileys",
   "main": "lib/index.js",
@@ -38,6 +38,7 @@
     "axios": "^0.24.0",
     "futoin-hkdf": "^1.5.0",
     "libsignal": "git+https://github.com/adiwajshing/libsignal-node",
+    "lodash": "^4.17.21",
     "music-metadata": "^7.12.3",
     "node-cache": "^5.1.2",
     "pino": "^7.0.0",
@@ -78,6 +79,7 @@
     "@adiwajshing/keyed-db": "^0.2.4",
     "@types/got": "^9.6.11",
     "@types/jest": "^27.5.1",
+    "@types/lodash": "^4.17.12",
     "@types/node": "^16.0.0",
     "@types/sharp": "^0.29.4",
     "@types/ws": "^8.0.0",
