@@ -3,6 +3,15 @@ import { FullJid, jidDecode } from "./jid-utils";
 import type { BinaryNode, BinaryNodeCodingOptions } from "./types";
 
 export const encodeBinaryNode = (
+  node: BinaryNode,
+  opts: Pick<BinaryNodeCodingOptions, "TAGS" | "TOKEN_MAP"> = constants,
+  buffer: number[] = [0]
+): Buffer => {
+  const encoded = encodeBinaryNodeInner(node, opts, buffer);
+  return Buffer.from(encoded);
+};
+
+export const encodeBinaryNodeInner = (
   { tag, attrs, content }: BinaryNode,
   opts: Pick<BinaryNodeCodingOptions, "TAGS" | "TOKEN_MAP"> = constants,
   buffer: number[] = [0]
@@ -227,7 +236,7 @@ export const encodeBinaryNode = (
   } else if (Array.isArray(content)) {
     writeListStart(content.length);
     for (const item of content) {
-      encodeBinaryNode(item, opts, buffer);
+      encodeBinaryNodeInner(item, opts, buffer);
     }
   } else if (typeof content === "undefined") {
     // do nothing
@@ -237,5 +246,5 @@ export const encodeBinaryNode = (
     );
   }
 
-  return Buffer.from(buffer);
+  return buffer;
 };
