@@ -1,4 +1,5 @@
 import * as libsignal from "libsignal";
+import { chunk } from "lodash";
 import { proto } from "../../WAProto";
 import {
   GroupCipher,
@@ -275,27 +276,32 @@ export const parseAndInjectE2ESessions = async (
     assertNodeErrorFree(node);
   }
 
-  await Promise.all(
-    nodes.map(async node => {
-      const signedKey = getBinaryNodeChild(node, "skey")!;
-      const key = getBinaryNodeChild(node, "key")!;
-      const identity = getBinaryNodeChildBuffer(node, "identity")!;
-      const jid = node.attrs.jid;
-      const registrationId = getBinaryNodeChildUInt(node, "registration", 4);
+  const chunkSize = 100;
+  const chunks = chunk(nodes, chunkSize);
 
-      const device = {
-        registrationId,
-        identityKey: generateSignalPubKey(identity),
-        signedPreKey: extractKey(signedKey),
-        preKey: extractKey(key)
-      };
-      const cipher = new libsignal.SessionBuilder(
-        signalStorage(auth),
-        jidToSignalProtocolAddress(jid)
-      );
-      await cipher.initOutgoing(device);
-    })
-  );
+  for (const nodesChunk of chunks) {
+    await Promise.all(
+      nodesChunk.map(async node => {
+        const signedKey = getBinaryNodeChild(node, "skey")!;
+        const key = getBinaryNodeChild(node, "key")!;
+        const identity = getBinaryNodeChildBuffer(node, "identity")!;
+        const jid = node.attrs.jid;
+        const registrationId = getBinaryNodeChildUInt(node, "registration", 4);
+
+        const device = {
+          registrationId,
+          identityKey: generateSignalPubKey(identity),
+          signedPreKey: extractKey(signedKey),
+          preKey: extractKey(key)
+        };
+        const cipher = new libsignal.SessionBuilder(
+          signalStorage(auth),
+          jidToSignalProtocolAddress(jid)
+        );
+        await cipher.initOutgoing(device);
+      })
+    );
+  }
 };
 
 export const extractDeviceJids = (
