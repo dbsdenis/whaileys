@@ -544,7 +544,7 @@ export const makeSocket = ({
   async function generatePairingKey() {
     const salt = randomBytes(32);
     const randomIv = randomBytes(16);
-    const key = derivePairingCodeKey(authState.creds.pairingCode!, salt);
+    const key = await derivePairingCodeKey(authState.creds.pairingCode!, salt);
     const ciphered = aesEncryptCTR(
       authState.creds.pairingEphemeralKeyPair.public,
       key,
