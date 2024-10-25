@@ -414,7 +414,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
             "link_code_pairing_wrapped_primary_ephemeral_pub"
           )
         );
-        const codePairingPublicKey = decipherLinkPublicKey(
+        const codePairingPublicKey = await decipherLinkPublicKey(
           primaryEphemeralPublicKeyWrapped
         );
         const companionSharedKey = Curve.sharedKey(
@@ -503,10 +503,13 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
     }
   };
 
-  function decipherLinkPublicKey(data: Uint8Array | Buffer) {
+  async function decipherLinkPublicKey(data: Uint8Array | Buffer) {
     const buffer = toRequiredBuffer(data);
     const salt = buffer.slice(0, 32);
-    const secretKey = derivePairingCodeKey(authState.creds.pairingCode!, salt);
+    const secretKey = await derivePairingCodeKey(
+      authState.creds.pairingCode!,
+      salt
+    );
     const iv = buffer.slice(32, 48);
     const payload = buffer.slice(48, 80);
     return aesDecryptCTR(payload, secretKey, iv);
