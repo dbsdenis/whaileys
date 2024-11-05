@@ -886,7 +886,12 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
     }
 
     // delete data once call has ended
-    if (status === "reject" || status === "accept" || status === "timeout") {
+    if (
+      status === "reject" ||
+      status === "accept" ||
+      status === "timeout" ||
+      status === "terminate"
+    ) {
       delete callOfferData[call.id];
     }
 
