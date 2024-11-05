@@ -386,7 +386,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       participant,
       additionalAttributes,
       useUserDevicesCache,
-      cachedGroupMetadata
+      cachedGroupMetadata,
+      statusJidList
     }: MessageRelayOptions
   ) => {
     const meId = authState.creds.me!.id;
@@ -395,7 +396,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     let shouldIncludeDeviceIdentity = false;
 
     const { user, server } = jidDecode(jid)!;
+    const statusJid = "status@broadcast";
     const isGroup = server === "g.us";
+    const isStatus = jid === statusJid;
     const isLid = server === "lid";
 
     msgId = msgId || generateMessageIDV2(sock.user?.id);
@@ -404,10 +407,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     const encodedMsg = encodeWAMessage(message);
     const participants: BinaryNode[] = [];
 
-    const destinationJid = jidEncode(
-      user,
-      isGroup ? "g.us" : isLid ? "lid" : "s.whatsapp.net"
-    );
+    const destinationJid = isStatus
+      ? statusJid
+      : jidEncode(user, isGroup ? "g.us" : isLid ? "lid" : "s.whatsapp.net");
 
     const binaryNodeContent: BinaryNode[] = [];
 
@@ -416,7 +418,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       // when the retry request is not for a group
       // only send to the specific device that asked for a retry
       // otherwise the message is sent out to every device that should be a recipient
-      if (!isGroup) {
+      if (!isGroup && !isStatus) {
         additionalAttributes = {
           ...additionalAttributes,
           device_fanout: "false"
@@ -428,28 +430,20 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     }
 
     await authState.keys.transaction(async () => {
-      if (isGroup) {
-        const { ciphertext, senderKeyDistributionMessageKey } =
-          await encryptSenderKeyMsgSignalProto(
-            destinationJid,
-            encodedMsg,
-            meId,
-            authState
-          );
-
+      if (isGroup || isStatus) {
         const [groupData, senderKeyMap] = await Promise.all([
           (async () => {
             let groupData = cachedGroupMetadata
               ? await cachedGroupMetadata(jid)
               : undefined;
-            if (groupData) {
+            if (groupData && Array.isArray(groupData?.participants)) {
               logger.trace(
                 { jid, participants: groupData.participants.length },
                 "using cached group metadata"
               );
             }
 
-            if (!groupData) {
+            if (!groupData && !isStatus) {
               groupData = await groupMetadata(jid);
             }
 
@@ -468,7 +462,14 @@ export const makeMessagesSocket = (config: SocketConfig) => {
         ]);
 
         if (!participant) {
-          const participantsList = groupData.participants.map(p => p.id);
+          const participantsList = groupData
+            ? groupData.participants.map(p => p.id)
+            : [];
+
+          if (isStatus && statusJidList) {
+            participantsList.push(...statusJidList);
+          }
+
           const additionalDevices = await getUSyncDevices(
             participantsList,
             !!useUserDevicesCache,
@@ -476,6 +477,14 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           );
           devices.push(...additionalDevices);
         }
+
+        const { ciphertext, senderKeyDistributionMessageKey } =
+          await encryptSenderKeyMsgSignalProto(
+            destinationJid,
+            encodedMsg,
+            meId,
+            authState
+          );
 
         const senderKeyJids: string[] = [];
         // ensure a connection is established with every device
@@ -523,7 +532,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           "sender-key-memory": { [jid]: senderKeyMap }
         });
       } else {
-        const { user: meUser } = jidDecode(meId)!;
+        const { user: meUser, device: meDevice } = jidDecode(meId)!;
         const { user: meLidUser } = jidDecode(meLid)!;
 
         const encodedMeMsg = encodeWAMessage({
@@ -537,12 +546,21 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           devices.push({ user });
           devices.push({ user: meUser });
 
-          const additionalDevices = await getUSyncDevices(
-            [meId, jid],
-            !!useUserDevicesCache,
-            true
-          );
-          devices.push(...additionalDevices);
+          // do not send message to self if the device is 0 (mobile)
+          if (
+            !(additionalAttributes?.["category"] === "peer" && user === meUser)
+          ) {
+            if (meDevice !== undefined && meDevice !== 0) {
+              devices.push({ user: meUser });
+            }
+
+            const additionalDevices = await getUSyncDevices(
+              [meId, jid],
+              !!useUserDevicesCache,
+              true
+            );
+            devices.push(...additionalDevices);
+          }
         }
 
         const allJids: string[] = [];
