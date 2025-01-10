@@ -618,6 +618,8 @@ export const normalizeMessageContent = (
     content?.ephemeralMessage?.message?.viewOnceMessage?.message ||
     content?.ephemeralMessage?.message ||
     content?.viewOnceMessage?.message ||
+    content?.viewOnceMessageV2Extension?.message ||
+    content?.viewOnceMessageV2?.message ||
     content ||
     undefined;
   return content;
