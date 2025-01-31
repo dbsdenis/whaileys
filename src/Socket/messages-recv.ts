@@ -905,26 +905,27 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
     // current hypothesis is that if pash is sent in the ack
     // it means -- the message hasn't reached all devices yet
     // we'll retry sending the message here
-    if (attrs.phash) {
-      logger.info({ attrs }, "received phash in ack, resending message...");
-      const key: WAMessageKey = {
-        remoteJid: attrs.from,
-        fromMe: true,
-        id: attrs.id
-      };
-      const msg = await getMessage(key);
-      if (msg) {
-        await relayMessage(key.remoteJid!, msg, {
-          messageId: key.id!,
-          useUserDevicesCache: false
-        });
-      } else {
-        logger.warn(
-          { attrs },
-          "could not send message again, as it was not found"
-        );
-      }
-    }
+    // DISABLED DUE TO LOOP IN GROUPS CAUSING BAN, SHOULD BE RE-ENABLED IF SOME DEVICES NOT GET THE MESSAGE ON 1x1 CHATS
+    // if (attrs.phash) {
+    //   logger.info({ attrs }, "received phash in ack, resending message...");
+    //   const key: WAMessageKey = {
+    //     remoteJid: attrs.from,
+    //     fromMe: true,
+    //     id: attrs.id
+    //   };
+    //   const msg = await getMessage(key);
+    //   if (msg) {
+    //     await relayMessage(key.remoteJid!, msg, {
+    //       messageId: key.id!,
+    //       useUserDevicesCache: false
+    //     });
+    //   } else {
+    //     logger.warn(
+    //       { attrs },
+    //       "could not send message again, as it was not found"
+    //     );
+    //   }
+    // }
   };
 
   const flushBufferIfLastOfflineNode = (
@@ -971,11 +972,12 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
     );
   });
 
-  ws.on("CB:ack,class:message", (node: BinaryNode) => {
-    handleBadAck(node).catch(error =>
-      onUnexpectedError(error, "handling bad ack")
-    );
-  });
+  // DISABLED DUE TO LOOP IN GROUPS CAUSING BAN, SHOULD BE RE-ENABLED IF SOME DEVICES NOT GET THE MESSAGE ON 1x1 CHATS
+  // ws.on("CB:ack,class:message", (node: BinaryNode) => {
+  //   handleBadAck(node).catch(error =>
+  //     onUnexpectedError(error, "handling bad ack")
+  //   );
+  // });
 
   ev.on("call", ([call]) => {
     // missed call + group call notification message generation
