@@ -733,13 +733,13 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
       return;
     }
 
-    const {
-      fullMessage: msg,
-      category,
-      author,
-      decryptionTask
-    } = decodeMessageStanza(node, authState);
     try {
+      const {
+        fullMessage: msg,
+        category,
+        author,
+        decryptionTask
+      } = decodeMessageStanza(node, authState);
       await Promise.all([
         processingMutex.mutex(async () => {
           await decryptionTask;
