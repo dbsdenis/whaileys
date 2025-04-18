@@ -730,13 +730,13 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                   proto.MediaRetryNotification.ResultType.SUCCESS
                 ) {
                   const resultStr =
-                    proto.MediaRetryNotification.ResultType[media.result];
+                    proto.MediaRetryNotification.ResultType[media.result!];
                   throw new Boom(
                     `Media re-upload failed by device (${resultStr})`,
                     {
                       data: media,
                       statusCode:
-                        getStatusCodeForMediaRetry(media.result) || 404
+                        getStatusCodeForMediaRetry(media.result!) || 404
                     }
                   );
                 }
