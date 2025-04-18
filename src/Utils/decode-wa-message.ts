@@ -125,10 +125,13 @@ export const decodeMessageStanza = (
       if (Array.isArray(stanza.content)) {
         for (const { tag, attrs, content } of stanza.content) {
           // iOS view-once messages
-          if (fullMessage?.message?.viewOnceMessageV2 || fullMessage?.message?.viewOnceMessageV2Extension) {
-            fullMessage.isViewOnce = true
+          if (
+            fullMessage?.message?.viewOnceMessageV2 ||
+            fullMessage?.message?.viewOnceMessageV2Extension
+          ) {
+            fullMessage.isViewOnce = true;
           }
-                
+
           // android view-once messages
           if (tag === "unavailable" && attrs.type === "view_once") {
             fullMessage.isViewOnce = true;
@@ -137,7 +140,7 @@ export const decodeMessageStanza = (
           if (tag === "verified_name" && content instanceof Uint8Array) {
             const cert = proto.VerifiedNameCertificate.decode(content);
             const details = proto.VerifiedNameCertificate.Details.decode(
-              cert.details
+              cert.details!
             );
             fullMessage.verifiedBizName = details.verifiedName;
           }

@@ -162,12 +162,12 @@ export const configureSuccessfulPairing = (
     deviceIdentityNode.content as Buffer
   );
   // check HMAC matches
-  const advSign = hmacSign(details, Buffer.from(advSecretKey, "base64"));
-  if (Buffer.compare(hmac, advSign) !== 0) {
+  const advSign = hmacSign(details!, Buffer.from(advSecretKey, "base64"));
+  if (Buffer.compare(hmac!, advSign) !== 0) {
     throw new Boom("Invalid account signature");
   }
 
-  const account = proto.ADVSignedDeviceIdentity.decode(details);
+  const account = proto.ADVSignedDeviceIdentity.decode(details!);
   const {
     accountSignatureKey,
     accountSignature,
@@ -176,26 +176,26 @@ export const configureSuccessfulPairing = (
   // verify the device signature matches
   const accountMsg = Buffer.concat([
     Buffer.from([6, 0]),
-    deviceDetails,
+    deviceDetails!,
     signedIdentityKey.public
   ]);
-  if (!Curve.verify(accountSignatureKey, accountMsg, accountSignature)) {
+  if (!Curve.verify(accountSignatureKey!, accountMsg, accountSignature!)) {
     throw new Boom("Failed to verify account signature");
   }
 
   // sign the details with our identity key
   const deviceMsg = Buffer.concat([
     Buffer.from([6, 1]),
-    deviceDetails,
+    deviceDetails!,
     signedIdentityKey.public,
-    accountSignatureKey
+    accountSignatureKey!
   ]);
   account.deviceSignature = Curve.sign(signedIdentityKey.private, deviceMsg);
 
-  const identity = createSignalIdentity(jid, accountSignatureKey);
+  const identity = createSignalIdentity(jid, accountSignatureKey!);
   const accountEnc = encodeSignedDeviceIdentity(account, false);
 
-  const deviceIdentity = proto.ADVDeviceIdentity.decode(account.details);
+  const deviceIdentity = proto.ADVDeviceIdentity.decode(account.details!);
 
   const reply: BinaryNode = {
     tag: "iq",
@@ -211,7 +211,7 @@ export const configureSuccessfulPairing = (
         content: [
           {
             tag: "device-identity",
-            attrs: { "key-index": deviceIdentity.keyIndex.toString() },
+            attrs: { "key-index": deviceIdentity.keyIndex!.toString() },
             content: accountEnc
           }
         ]
