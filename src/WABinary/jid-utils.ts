@@ -61,6 +61,8 @@ export const areJidsSameUser = (
 /** is the jid a user */
 export const isJidUser = (jid: string | undefined) =>
   jid?.endsWith("@s.whatsapp.net");
+/** is the jid MetaAI */
+export const isJidMetaAI = (jid: string | undefined) => jid?.endsWith("@bot");
 /** is the jid a broadcast */
 export const isJidBroadcast = (jid: string | undefined) =>
   jid?.endsWith("@broadcast");
