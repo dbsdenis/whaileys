@@ -155,11 +155,20 @@ export const decodeDecompressedBinaryNode = (
   };
 
   const readAdJid = () => {
-    const agent = readByte();
+    const jidDomains = [0, 128];
+    const domainType = readByte();
     const device = readByte();
     const user = readString(readByte());
 
-    return jidEncode(user, agent == 0 ? "s.whatsapp.net" : "lid", device);
+    if (!jidDomains.includes(domainType) && domainType !== 1) {
+      console.log("Unknown domain type:", domainType, user);
+    }
+
+    return jidEncode(
+      user,
+      jidDomains.includes(domainType) ? "s.whatsapp.net" : "lid",
+      device
+    );
   };
 
   const readString = (tag: number): string => {
