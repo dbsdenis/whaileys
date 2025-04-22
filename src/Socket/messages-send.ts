@@ -466,6 +466,13 @@ export const makeMessagesSocket = (config: SocketConfig) => {
             ? groupData.participants.map(p => p.id)
             : [];
 
+          if (!isStatus) {
+            additionalAttributes = {
+              ...additionalAttributes,
+              addressing_mode: groupData?.addressingMode || "pn"
+            };
+          }
+
           if (isStatus && statusJidList) {
             participantsList.push(...statusJidList);
           }
