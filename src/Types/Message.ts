@@ -210,15 +210,11 @@ export type AnyMessageContent =
       disappearingMessagesInChat: boolean | number;
     };
 
-export type GroupMetadataParticipants = Pick<GroupMetadata, "participants">;
-
 type MinimalRelayOptions = {
   /** override the message ID with a custom provided string */
   messageId?: string;
   /** cached group metadata, use to prevent redundant requests to WA & speed up msg sending */
-  cachedGroupMetadata?: (
-    jid: string
-  ) => Promise<GroupMetadataParticipants | undefined>;
+  cachedGroupMetadata?: (jid: string) => Promise<GroupMetadata | undefined>;
 };
 
 export type MessageRelayOptions = MinimalRelayOptions & {

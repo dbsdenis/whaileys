@@ -11,6 +11,8 @@ export type ParticipantAction = "add" | "remove" | "promote" | "demote";
 export interface GroupMetadata {
   id: string;
   owner: string | undefined;
+  /** group uses 'lid' or 'pn' to send messages */
+  addressingMode: string | undefined;
   subject: string;
   /** group subject owner */
   subjectOwner?: string;

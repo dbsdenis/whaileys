@@ -287,6 +287,7 @@ export const extractGroupMetadata = (result: BinaryNode) => {
   const eph = getBinaryNodeChild(group, "ephemeral")?.attrs.expiration;
   const metadata: GroupMetadata = {
     id: groupId,
+    addressingMode: group.attrs.addressing_mode,
     subject: group.attrs.subject,
     subjectOwner: group.attrs.s_o,
     subjectTime: +group.attrs.s_t,
