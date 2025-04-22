@@ -179,6 +179,8 @@ export const decodeMessageStanza = (
                   auth
                 );
                 break;
+              case "msmsg":
+                return; // ignore meta IA messages
               case "plaintext":
                 msgBuffer = content as Buffer;
                 break;
