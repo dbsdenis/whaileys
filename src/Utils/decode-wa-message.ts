@@ -6,6 +6,7 @@ import {
   BinaryNode,
   isJidBroadcast,
   isJidGroup,
+  isJidMetaAI,
   isJidNewsletter,
   isJidStatusBroadcast,
   isJidUser,
@@ -46,7 +47,7 @@ export const decodeMessageStanza = (
   const isMeLid = (jid: string) => areJidsSameUser(jid, auth.creds.me!.lid);
 
   if (isJidUser(from) || isLidUser(from)) {
-    if (recipient) {
+    if (recipient && !isJidMetaAI(recipient)) {
       if (!isMe(from) && !isMeLid(from)) {
         throw new Boom("receipient present, but msg not from me", {
           data: stanza

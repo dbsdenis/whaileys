@@ -725,14 +725,6 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
   };
 
   const handleMessage = async (node: BinaryNode) => {
-    const encNode = getBinaryNodeChild(node, "enc");
-
-    // temporary fix for crashes and issues resulting of failed msmsg decryption
-    if (encNode && encNode?.attrs?.type === "msmsg") {
-      await sendMessageAck(node);
-      return;
-    }
-
     if (
       shouldIgnoreJid(node.attrs.from!) &&
       node.attrs.from! !== "@s.whatsapp.net"
@@ -751,12 +743,6 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
       } = decodeMessageStanza(node, authState);
       await Promise.all([
         processingMutex.mutex(async () => {
-          // @bot messages are not ackable on the first try, we need to send a retry request
-          if (isJidMetaAI(msg.key?.remoteJid!) && !msgRetryMap[msg.key.id!]) {
-            await sendRetryRequest(node, true);
-            return;
-          }
-
           await decryptionTask;
           // message failed to decrypt
           if (
