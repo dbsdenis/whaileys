@@ -159,10 +159,6 @@ export const decodeDecompressedBinaryNode = (
     const device = readByte();
     const user = readString(readByte());
 
-    if (domainType != 0 && domainType != 128 && domainType != 1) {
-      console.log("Unknown domain type:", domainType, user, device);
-    }
-
     return jidEncode(
       user,
       domainType == 0 || domainType == 128 ? "s.whatsapp.net" : "lid",
