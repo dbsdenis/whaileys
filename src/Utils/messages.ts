@@ -1,6 +1,6 @@
 import { Boom } from "@hapi/boom";
 import axios from "axios";
-import { promises as fs } from "fs";
+import { createReadStream, promises as fs } from "fs";
 import { Logger } from "pino";
 import { proto } from "../../WAProto";
 import {
@@ -151,67 +151,48 @@ export const prepareWAMessageMedia = async (
 
   const requiresDurationComputation =
     mediaType === "audio" && typeof uploadData.seconds === "undefined";
-  const requiresThumbnailComputation =
-    (mediaType === "image" || mediaType === "video") &&
-    typeof uploadData["jpegThumbnail"] === "undefined";
-  const requiresOriginalForSomeProcessing =
-    requiresDurationComputation || requiresThumbnailComputation;
+
   const {
     mediaKey,
-    encWriteStream,
-    bodyPath,
+    originalFilePath,
+    encFilePath,
     fileEncSha256,
     fileSha256,
-    fileLength,
-    didSaveToTmpPath
+    fileLength
   } = await encryptedStream(
     uploadData.media,
     options.mediaTypeOverride || mediaType,
-    requiresOriginalForSomeProcessing
+    requiresDurationComputation
   );
   // url safe Base64 encode the SHA256 hash of the body
   const fileEncSha256B64 = fileEncSha256.toString("base64");
-  const [{ mediaUrl, directPath }] = await Promise.all([
-    (async () => {
-      const result = await options.upload(encWriteStream, {
-        fileEncSha256B64,
-        mediaType,
-        timeoutMs: options.mediaUploadTimeoutMs
-      });
-      logger?.debug({ mediaType, cacheableKey }, "uploaded media");
-      return result;
-    })(),
-    (async () => {
-      try {
-        if (requiresThumbnailComputation) {
-          const { thumbnail, originalImageDimensions } =
-            await generateThumbnail(bodyPath!, mediaType as any, options);
-          uploadData.jpegThumbnail = thumbnail;
-          if (!uploadData.width && originalImageDimensions) {
-            uploadData.width = originalImageDimensions.width;
-            uploadData.height = originalImageDimensions.height;
-            logger?.debug("set dimensions");
-          }
-
-          logger?.debug("generated thumbnail");
-        }
-
-        if (requiresDurationComputation) {
-          uploadData.seconds = await getAudioDuration(bodyPath!);
-          logger?.debug("computed audio duration");
-        }
-      } catch (error) {
-        logger?.warn({ trace: error.stack }, "failed to obtain extra info");
-      }
-    })()
-  ]).finally(async () => {
-    encWriteStream.destroy();
-    // remove tmp files
-    if (didSaveToTmpPath && bodyPath) {
-      await fs.unlink(bodyPath);
-      logger?.debug("removed tmp files");
+  const { mediaUrl, directPath } = await options.upload(
+    createReadStream(encFilePath),
+    {
+      fileEncSha256B64,
+      mediaType,
+      timeoutMs: options.mediaUploadTimeoutMs
     }
-  });
+  );
+
+  logger?.debug({ mediaType, cacheableKey }, "uploaded media");
+
+  if (requiresDurationComputation && originalFilePath) {
+    uploadData.seconds = await getAudioDuration(originalFilePath);
+    logger?.debug("computed audio duration");
+  }
+
+  await fs
+    .unlink(encFilePath)
+    .catch(err => logger?.error(err, "Error deleting temp file"));
+  logger?.debug("removed tmp encrypted file");
+
+  if (originalFilePath) {
+    await fs
+      .unlink(originalFilePath)
+      .catch(err => logger?.error(err, "Error deleting temp file"));
+    logger?.debug("removed tmp original file");
+  }
 
   const obj = WAProto.Message.fromObject({
     [`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject({
