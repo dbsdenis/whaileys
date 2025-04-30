@@ -306,15 +306,20 @@ export const makeSocket = ({
         if (logger.level === "trace") {
           logger.trace({ msgId, fromMe: false, frame }, "communication");
         }
-        // TODO remove after debug memory leak
-        const test = frame?.content?.[0] as unknown as {
+
+        const frameContent = frame?.content?.[0] as unknown as {
           tag: string;
           attrs: any;
         };
-        if (test?.tag === "offline_preview" && test?.attrs?.count > 4) {
-          logger.fatal({
+
+        if (
+          frameContent?.tag === "offline_preview" &&
+          frameContent?.attrs?.count > 100 &&
+          logger.level === "error"
+        ) {
+          logger.error({
             message: "offline_preview",
-            count: test?.attrs?.count
+            count: frameContent?.attrs?.count
           });
         }
 
