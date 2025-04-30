@@ -398,8 +398,8 @@ export const encryptedStream = async (
       fileLength
     };
   } catch (error) {
-    encFileWriteStream.end(error);
-    originalFileStream?.end?.(error);
+    encFileWriteStream.destroy(error);
+    originalFileStream?.destroy?.(error);
     aes.destroy(error);
     hmac.destroy(error);
     sha256Plain.destroy(error);
