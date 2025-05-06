@@ -166,14 +166,11 @@ export const prepareWAMessageMedia = async (
   );
   // url safe Base64 encode the SHA256 hash of the body
   const fileEncSha256B64 = fileEncSha256.toString("base64");
-  const { mediaUrl, directPath } = await options.upload(
-    createReadStream(encFilePath),
-    {
-      fileEncSha256B64,
-      mediaType,
-      timeoutMs: options.mediaUploadTimeoutMs
-    }
-  );
+  const { mediaUrl, directPath } = await options.upload(encFilePath, {
+    fileEncSha256B64,
+    mediaType,
+    timeoutMs: options.mediaUploadTimeoutMs
+  });
 
   logger?.debug({ mediaType, cacheableKey }, "uploaded media");
 

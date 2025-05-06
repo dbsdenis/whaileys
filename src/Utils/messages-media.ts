@@ -581,7 +581,7 @@ export const getWAUploadToServer = (
   { customUploadHosts, fetchAgent, logger, options }: SocketConfig,
   refreshMediaConn: (force: boolean) => Promise<MediaConnInfo>
 ): WAMediaUploadFunction => {
-  return async (stream, { mediaType, fileEncSha256B64, timeoutMs }) => {
+  return async (filePath, { mediaType, fileEncSha256B64, timeoutMs }) => {
     const { default: axios } = await import("axios");
     // send a query JSON to obtain the url & auth token to upload our media
     let uploadInfo = await refreshMediaConn(false);
@@ -598,7 +598,7 @@ export const getWAUploadToServer = (
       const url = `https://${hostname}${MEDIA_PATH_MAP[mediaType]}/${fileEncSha256B64}?auth=${auth}&token=${fileEncSha256B64}`;
       let result: any;
       try {
-        const body = await axios.post(url, stream, {
+        const body = await axios.post(url, createReadStream(filePath), {
           ...options,
           maxRedirects: 0,
           headers: {

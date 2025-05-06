@@ -1,5 +1,8 @@
 import { Boom } from "@hapi/boom";
 import { createHash } from "crypto";
+import { tmpdir } from "os";
+import { join } from "path";
+import { createWriteStream, promises as fs } from "fs";
 import {
   CatalogCollection,
   CatalogStatus,
@@ -18,6 +21,7 @@ import {
   getBinaryNodeChildString
 } from "../WABinary";
 import { getStream, getUrlFromDirectPath, toReadable } from "./messages-media";
+import { generateMessageIDV2 } from "./generics";
 
 export const parseCatalogNode = (node: BinaryNode) => {
   const catalogNode = getBinaryNodeChild(node, "product_catalog");
@@ -257,22 +261,27 @@ export const uploadingNecessaryImages = async (
 
       const { stream } = await getStream(img);
       const hasher = createHash("sha256");
-      const contentBlocks: Buffer[] = [];
+
+      const filePath = join(tmpdir(), "img" + generateMessageIDV2() + "-enc");
+      const encFileWriteStream = createWriteStream(filePath);
+
       for await (const block of stream) {
         hasher.update(block);
-        contentBlocks.push(block);
+        encFileWriteStream.write(block);
       }
 
       const sha = hasher.digest("base64");
 
-      const { directPath } = await waUploadToServer(
-        toReadable(Buffer.concat(contentBlocks)),
-        {
-          mediaType: "product-catalog-image",
-          fileEncSha256B64: sha,
-          timeoutMs
-        }
-      );
+      const { directPath } = await waUploadToServer(filePath, {
+        mediaType: "product-catalog-image",
+        fileEncSha256B64: sha,
+        timeoutMs
+      });
+
+      await fs
+        .unlink(filePath)
+        .catch(err => console.log("Error deleting temp file ", err));
+
       return { url: getUrlFromDirectPath(directPath) };
     })
   );

@@ -246,7 +246,7 @@ export type MessageGenerationOptionsFromContent =
   };
 
 export type WAMediaUploadFunction = (
-  readStream: Readable,
+  filePath: string,
   opts: { fileEncSha256B64: string; mediaType: MediaType; timeoutMs?: number }
 ) => Promise<{ mediaUrl: string; directPath: string }>;
 
