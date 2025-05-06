@@ -406,6 +406,16 @@ export const encryptedStream = async (
     sha256Enc.destroy(error);
     stream.destroy(error);
 
+    await fs
+      .unlink(encFilePath)
+      .catch(err => logger?.debug(err, "Error deleting enc temp file"));
+
+    if (originalFilePath) {
+      await fs
+        .unlink(originalFilePath)
+        .catch(err => logger?.debug(err, "Error deleting original temp file"));
+    }
+
     throw error;
   }
 };
