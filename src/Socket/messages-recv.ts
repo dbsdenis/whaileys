@@ -146,7 +146,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 
     let retryCount = msgRetryMap[msgId] || 0;
     if (retryCount >= 5) {
-      logger.debug({ retryCount, msgId }, "reached retry limit, clearing");
+      logger.error({ retryCount, msgId }, "reached retry limit, clearing");
       delete msgRetryMap[msgId];
       return;
     }
@@ -749,7 +749,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
             msg.messageStubType === proto.WebMessageInfo.StubType.CIPHERTEXT &&
             !msg.isViewOnce
           ) {
-            logger.error(
+            logger.debug(
               { key: msg.key, params: msg.messageStubParameters },
               "failure in decrypting message"
             );
