@@ -314,6 +314,7 @@ async function findAppModules() {
                     `unable to find reference of alias '${elements[2].name}'` +
                       currLoc
                   );
+                  type = "unknown_type"; // fallback
                 }
               } else if (elements[2].type === "MemberExpression") {
                 let crossRef = modInfo.crossRefs.find(
@@ -322,11 +323,13 @@ async function findAppModules() {
                     elements[2]?.object?.left?.name ||
                     elements[2]?.object?.callee?.name
                 );
-                if (
-                  elements[1]?.property?.name === "ENUM" &&
-                  elements[2]?.property?.name?.includes("Type")
-                ) {
-                  type = rename(elements[2]?.property?.name);
+                if (elements[1]?.property?.name === "ENUM") {
+                  if (elements[2]?.property?.name) {
+                    type = rename(elements[2]?.property?.name);
+                  } else {
+                    type = "unknown_enum";
+                    console.warn(`Unable to resolve ENUM type name ${currLoc}`);
+                  }
                 } else if (elements[2]?.property?.name.includes("Spec")) {
                   type = rename(elements[2].property.name);
                 } else if (
@@ -338,11 +341,19 @@ async function findAppModules() {
                 ) {
                   type = rename(elements[2].property.name);
                 } else {
+                  type = "unknown_type";
                   console.warn(
                     `unable to find reference of alias to other module '${elements[2].object.name}' or to message ${elements[2].property.name} of this module` +
                       currLoc
                   );
                 }
+              }
+
+              if (type === "enum") {
+                console.warn(
+                  `Field '${name}' resolved to invalid 'enum' type. Renaming.`
+                );
+                type = `${targetIdent.name}_${name}_Enum`;
               }
             }
 
@@ -510,7 +521,7 @@ async function findAppModules() {
   const decodedProto = Object.keys(decodedProtoMap).sort();
   const sortedStr = decodedProto.map(d => decodedProtoMap[d]).join("\n");
 
-  const decodedProtoStr = `syntax = "proto3";\npackage waproto;\n\n/// WhatsApp Version: ${whatsAppVersion}\n\n${sortedStr}`;
+  const decodedProtoStr = `syntax = "proto3";\npackage proto;\n\n/// WhatsApp Version: ${whatsAppVersion}\n\n${sortedStr}`;
   const destinationPath = "../WAProto/WAProto.proto";
   await fs.writeFile(destinationPath, decodedProtoStr);
 
