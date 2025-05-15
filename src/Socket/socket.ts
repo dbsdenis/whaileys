@@ -538,7 +538,7 @@ export const makeSocket = ({
             {
               tag: "companion_platform_id",
               attrs: {},
-              content: "49" // Chrome
+              content: "1" // Chrome
             },
             {
               tag: "companion_platform_display",
