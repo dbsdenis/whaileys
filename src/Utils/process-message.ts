@@ -215,9 +215,7 @@ const processMessage = async (
               );
 
               ev.emit("messages.upsert", {
-                messages: [
-                  { ...webMessageInfo, placeholderMsgId: response.stanzaId }
-                ],
+                messages: [webMessageInfo],
                 type: "notify"
               });
             }
