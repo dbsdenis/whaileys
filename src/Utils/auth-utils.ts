@@ -11,6 +11,7 @@ import type {
 } from "../Types";
 import { Curve, signedKeyPair } from "./crypto";
 import { delay, generateRegistrationId } from "./generics";
+import { DEFAULT_CACHE_TTLS } from "../Defaults";
 
 /**
  * Adds caching capability to a SignalKeyStore
@@ -21,12 +22,15 @@ import { delay, generateRegistrationId } from "./generics";
 export function makeCacheableSignalKeyStore(
   store: SignalKeyStore,
   logger: Logger,
-  opts?: NodeCache.Options
+  _cache?: NodeCache
 ): SignalKeyStore {
-  const cache = new NodeCache({
-    ...(opts || {}),
-    useClones: false
-  });
+  const cache =
+    _cache ||
+    new NodeCache({
+      stdTTL: DEFAULT_CACHE_TTLS.SIGNAL_STORE, // 5 minutes
+      useClones: false,
+      deleteOnExpire: true
+    });
 
   function getUniqueId(type: string, id: string) {
     return `${type}.${id}`;
