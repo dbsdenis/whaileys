@@ -804,7 +804,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
               proto.Message.ProtocolMessage.Type.SHARE_PHONE_NUMBER &&
             node.attrs.sender_pn
           ) {
-            ev.emit("chats.phone-number-share", {
+            ev.emit("chats.phoneNumberShare", {
               lid: node.attrs.from,
               jid: node.attrs.sender_pn
             });
