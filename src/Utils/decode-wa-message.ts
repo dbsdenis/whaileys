@@ -127,17 +127,8 @@ export const decodeMessageStanza = (
       let decryptables = 0;
       if (Array.isArray(stanza.content)) {
         for (const { tag, attrs, content } of stanza.content) {
-          // iOS view-once messages
-          if (
-            fullMessage?.message?.viewOnceMessageV2 ||
-            fullMessage?.message?.viewOnceMessageV2Extension
-          ) {
-            fullMessage.isViewOnce = true;
-          }
-
-          // android view-once messages
           if (tag === "unavailable" && attrs.type === "view_once") {
-            fullMessage.isViewOnce = true;
+            fullMessage.key.isViewOnce = true;
           }
 
           if (tag === "verified_name" && content instanceof Uint8Array) {

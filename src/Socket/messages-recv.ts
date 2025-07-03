@@ -747,7 +747,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
           // message failed to decrypt
           if (
             msg.messageStubType === proto.WebMessageInfo.StubType.CIPHERTEXT &&
-            !msg.isViewOnce
+            !msg.key.isViewOnce
           ) {
             logger.debug(
               { key: msg.key, params: msg.messageStubParameters },
