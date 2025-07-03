@@ -102,15 +102,17 @@ export const decodeMessageStanza = (
     remoteJid: chatId,
     fromMe,
     id: msgId,
-    participant
+    senderLid: stanza?.attrs?.sender_lid,
+    senderPn: stanza?.attrs?.sender_pn,
+    participant,
+    participantPn: stanza?.attrs?.participant_pn,
+    participantLid: stanza?.attrs?.participant_lid
   };
 
   const fullMessage: WAMessage = {
     key,
     messageTimestamp: +stanza.attrs.t,
-    pushName: pushname,
-    senderLid: stanza.attrs.sender_lid,
-    senderPn: stanza.attrs.sender_pn
+    pushName: pushname
   };
 
   if (key.fromMe) {

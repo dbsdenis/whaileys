@@ -9,15 +9,19 @@ import type { GroupMetadata } from "./GroupMetadata";
 // export the WAMessage Prototypes
 export { proto as WAProto };
 export type WAMessage = proto.IWebMessageInfo & {
-  senderLid?: string | undefined;
-  senderPn?: string | undefined;
-  placeholderMsgId?: string | null;
+  key: WAMessageKey;
   isViewOnce?: boolean;
 };
 export type WAMessageContent = proto.IMessage;
 export type WAContactMessage = proto.Message.IContactMessage;
 export type WAContactsArrayMessage = proto.Message.IContactsArrayMessage;
-export type WAMessageKey = proto.IMessageKey;
+export type WAMessageKey = proto.IMessageKey & {
+  senderLid?: string;
+  server_id?: string;
+  senderPn?: string;
+  participantLid?: string;
+  participantPn?: string;
+};
 export type WATextMessage = proto.Message.IExtendedTextMessage;
 export type WAContextInfo = proto.IContextInfo;
 export type WALocationMessage = proto.Message.ILocationMessage;
