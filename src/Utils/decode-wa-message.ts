@@ -39,7 +39,7 @@ export const decodeMessageStanza = (
   let author: string;
 
   const msgId = stanza.attrs.id;
-  const from = stanza.attrs.from;
+  const from = stanza.attrs.sender_lid || stanza.attrs.from;
   const participant: string | undefined = stanza.attrs.participant;
   const recipient: string | undefined = stanza.attrs.recipient;
 
@@ -108,6 +108,8 @@ export const decodeMessageStanza = (
     participantPn: stanza?.attrs?.participant_pn,
     participantLid: stanza?.attrs?.participant_lid
   };
+
+  console.log("KEY.REMOTE JID", key.remoteJid);
 
   const fullMessage: WAMessage = {
     key,
