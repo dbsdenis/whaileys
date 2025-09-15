@@ -543,7 +543,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           "sender-key-memory": { [jid]: senderKeyMap }
         });
       } else {
-        const { user: meUser, device: meDevice } = jidDecode(meId)!;
+        const { user: meUser } = jidDecode(meId)!;
         const { user: meLidUser } = jidDecode(meLid)!;
 
         const encodedMeMsg = encodeWAMessage({
@@ -557,14 +557,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           devices.push({ user });
           devices.push({ user: meUser });
 
-          // do not send message to self if the device is 0 (mobile)
           if (
             !(additionalAttributes?.["category"] === "peer" && user === meUser)
           ) {
-            if (meDevice !== undefined && meDevice !== 0) {
-              devices.push({ user: meUser });
-            }
-
             const additionalDevices = await getUSyncDevices(
               [meId, jid],
               !!useUserDevicesCache,
