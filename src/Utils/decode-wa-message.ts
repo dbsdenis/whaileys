@@ -38,8 +38,15 @@ export const decodeMessageStanza = (
   let chatId: string;
   let author: string;
 
+  const senderPn = isJidUser(stanza.attrs.from)
+    ? stanza.attrs.from
+    : stanza.attrs.sender_pn;
+  const senderLid = isLidUser(stanza.attrs.from)
+    ? stanza.attrs.from
+    : stanza.attrs.sender_lid;
+
   const msgId = stanza.attrs.id;
-  const from = stanza.attrs.sender_lid || stanza.attrs.from;
+  const from = senderPn || stanza.attrs.from;
   const participant: string | undefined = stanza.attrs.participant;
   const recipient: string | undefined = stanza.attrs.recipient;
 
@@ -49,7 +56,7 @@ export const decodeMessageStanza = (
   if (isJidUser(from) || isLidUser(from)) {
     if (recipient && !isJidMetaAI(recipient)) {
       if (!isMe(from) && !isMeLid(from)) {
-        throw new Boom("receipient present, but msg not from me", {
+        throw new Boom("recipient present, but msg not from me", {
           data: stanza
         });
       }
@@ -102,14 +109,12 @@ export const decodeMessageStanza = (
     remoteJid: chatId,
     fromMe,
     id: msgId,
-    senderLid: stanza?.attrs?.sender_lid,
-    senderPn: stanza?.attrs?.sender_pn,
+    senderLid,
+    senderPn,
     participant,
     participantPn: stanza?.attrs?.participant_pn,
     participantLid: stanza?.attrs?.participant_lid
   };
-
-  console.log("KEY.REMOTE JID", key.remoteJid);
 
   const fullMessage: WAMessage = {
     key,
