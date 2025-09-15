@@ -283,7 +283,7 @@ export const fetchLatestBaileysVersion = async (
   options: AxiosRequestConfig<any> = {}
 ) => {
   const URL =
-    "https://raw.githubusercontent.com/adiwajshing/Baileys/master/src/Defaults/baileys-version.json";
+    "https://raw.githubusercontent.com/canove/whaileys/master/src/Defaults/baileys-version.json";
   try {
     const result = await axios.get<{ version: WAVersion }>(URL, {
       ...options,
