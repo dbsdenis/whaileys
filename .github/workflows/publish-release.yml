@@ -39,6 +39,8 @@ jobs:
       - name: 🔖 Check if version tag already exists
         id: check_tag
         run: |
+          git fetch --tags --force
+
           if git rev-parse "v$PACKAGE_VERSION" >/dev/null 2>&1; then
             echo "Tag v$PACKAGE_VERSION already exists. Skipping release."
             echo "should_release=false" >> $GITHUB_OUTPUT
