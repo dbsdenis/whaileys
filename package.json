@@ -1,8 +1,8 @@
 {
-  "name": "@whaticket/baileys",
+  "name": "whaileys",
   "version": "6.1.1",
   "description": "WhatsApp API",
-  "homepage": "https://github.com/whaticket/baileys",
+  "homepage": "https://github.com/canove/whaileys",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "keywords": [
@@ -31,7 +31,7 @@
   "author": "Adhiraj Singh",
   "license": "MIT",
   "repository": {
-    "url": "git@github.com:whaticket/baileys.git"
+    "url": "git@github.com:canove/whaileys.git"
   },
   "dependencies": {
     "@hapi/boom": "^9.1.3",
