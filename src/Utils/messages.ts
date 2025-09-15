@@ -628,8 +628,8 @@ export const extractMessageContent = (
           "contentText" in msg
             ? msg.contentText
             : "hydratedContentText" in msg
-            ? msg.hydratedContentText
-            : ""
+              ? msg.hydratedContentText
+              : ""
       };
     }
   };
