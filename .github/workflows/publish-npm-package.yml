@@ -2,7 +2,7 @@ name: 📦 Publish to npm
 
 on:
   release:
-    types: [published]
+    types: [created]
 
 jobs:
   Publish:
