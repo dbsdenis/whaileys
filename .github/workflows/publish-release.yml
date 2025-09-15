@@ -8,6 +8,9 @@ jobs:
   Build:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: 📥 Checkout Commit
         uses: actions/checkout@v3
