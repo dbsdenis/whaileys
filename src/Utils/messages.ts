@@ -592,6 +592,9 @@ export const normalizeMessageContent = (
   content: WAMessageContent | null | undefined
 ): WAMessageContent | undefined => {
   content =
+    content?.editedMessage?.message ||
+    content?.lottieStickerMessage?.message ||
+    content?.documentWithCaptionMessage?.message ||
     content?.ephemeralMessage?.message?.viewOnceMessage?.message ||
     content?.ephemeralMessage?.message ||
     content?.viewOnceMessage?.message ||
