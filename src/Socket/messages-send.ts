@@ -4,6 +4,7 @@ import { proto } from "../../WAProto";
 import { WA_DEFAULT_EPHEMERAL } from "../Defaults";
 import {
   AnyMessageContent,
+  GroupMetadata,
   MediaConnInfo,
   MessageReceiptType,
   MessageRelayOptions,
@@ -74,6 +75,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       stdTTL: 300, // 5 minutes
       useClones: false
     });
+
+  const groupMetadataCache = config.groupMetadataCache;
 
   let mediaConn: Promise<MediaConnInfo>;
   const refreshMediaConn = async (forceGet = false) => {
@@ -386,7 +389,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       participant,
       additionalAttributes,
       useUserDevicesCache,
-      cachedGroupMetadata,
       statusJidList
     }: MessageRelayOptions
   ) => {
@@ -433,9 +435,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       if (isGroup || isStatus) {
         const [groupData, senderKeyMap] = await Promise.all([
           (async () => {
-            let groupData = cachedGroupMetadata
-              ? await cachedGroupMetadata(jid)
-              : undefined;
+            let groupData = groupMetadataCache?.get(jid) as
+              | GroupMetadata
+              | undefined;
             if (groupData && Array.isArray(groupData?.participants)) {
               logger.trace(
                 { jid, participants: groupData.participants.length },
@@ -445,6 +447,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
             if (!groupData && !isStatus) {
               groupData = await groupMetadata(jid);
+              groupMetadataCache?.set(jid, groupData);
             }
 
             return groupData;
@@ -836,7 +839,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
         fullMsg.message = patchMessageForMdIfRequired(fullMsg.message!);
         await relayMessage(jid, fullMsg.message!, {
           messageId: fullMsg.key.id!,
-          cachedGroupMetadata: options.cachedGroupMetadata,
           additionalAttributes
         });
         if (config.emitOwnEvents) {

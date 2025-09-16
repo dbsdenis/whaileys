@@ -53,6 +53,8 @@ export type SocketConfig = {
   transactionOpts: TransactionCapabilityOptions;
   /** provide a cache to store a user's device list */
   userDevicesCache?: NodeCache;
+  /** provide a cache to store metadata, used to prevent redundant requests to WA & speed up msg sending */
+  groupMetadataCache?: NodeCache;
   /** marks the client as online whenever the socket successfully connects */
   markOnlineOnConnect: boolean;
   /**
