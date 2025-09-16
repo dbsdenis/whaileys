@@ -184,24 +184,35 @@ export const makeChatsSocket = (config: SocketConfig) => {
   };
 
   /** update the profile picture for yourself or a group */
-  const updateProfilePicture = async (jid: string, content: WAMediaUpload) => {
-    const { img } = await generateProfilePicture(content);
-    await query({
-      tag: "iq",
-      attrs: {
-        to: jidNormalizedUser(jid),
-        type: "set",
-        xmlns: "w:profile:picture"
-      },
-      content: [
-        {
-          tag: "picture",
-          attrs: { type: "image" },
-          content: img
-        }
-      ]
-    });
-  };
+const updateProfilePicture = async (jid: string, content: WAMediaUpload) => {
+  if (!jid) {
+    throw new Boom('Illegal no-jid profile update. Please specify either your ID or the ID of the chat you wish to update')
+  }
+
+  let targetJid: string | undefined
+  if (jidNormalizedUser(jid) !== jidNormalizedUser(authState.creds.me!.id)) {
+    targetJid = jidNormalizedUser(jid)
+  }
+
+  const { img } = await generateProfilePicture(content)
+
+  await query({
+    tag: 'iq',
+    attrs: {
+      to: S_WHATSAPP_NET,
+      type: 'set',
+      xmlns: 'w:profile:picture',
+      ...(targetJid ? { target: targetJid } : {})
+    },
+    content: [
+      {
+        tag: 'picture',
+        attrs: { type: 'image' },
+        content: img
+      }
+    ]
+  })
+}
 
   /** update the profile status for yourself */
   const updateProfileStatus = async (status: string) => {
