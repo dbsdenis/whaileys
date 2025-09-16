@@ -185,13 +185,20 @@ export const makeChatsSocket = (config: SocketConfig) => {
 
   /** update the profile picture for yourself or a group */
   const updateProfilePicture = async (jid: string, content: WAMediaUpload) => {
+    const targetJid =
+      jidNormalizedUser(jid) !== jidNormalizedUser(authState.creds.me!.id)
+        ? jidNormalizedUser(jid)
+        : undefined;
+
     const { img } = await generateProfilePicture(content);
+
     await query({
       tag: "iq",
       attrs: {
-        to: jidNormalizedUser(jid),
+        to: S_WHATSAPP_NET,
         type: "set",
-        xmlns: "w:profile:picture"
+        xmlns: "w:profile:picture",
+        ...(targetJid ? { target: targetJid } : {})
       },
       content: [
         {
