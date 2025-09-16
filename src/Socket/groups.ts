@@ -1,4 +1,6 @@
+import NodeCache from "node-cache";
 import { proto } from "../../WAProto";
+import { DEFAULT_CACHE_TTLS } from "../Defaults";
 import {
   GroupMetadata,
   ParticipantAction,
@@ -22,6 +24,13 @@ import {
 import { makeChatsSocket } from "./chats";
 
 export const makeGroupsSocket = (config: SocketConfig) => {
+  if (!config.groupMetadataCache) {
+    config.groupMetadataCache = new NodeCache({
+      stdTTL: DEFAULT_CACHE_TTLS.GROUP_METADATA,
+      useClones: false
+    });
+  }
+
   const sock = makeChatsSocket(config);
   const { authState, ev, query, upsertMessage } = sock;
 
