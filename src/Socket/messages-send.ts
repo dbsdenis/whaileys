@@ -476,6 +476,13 @@ export const makeMessagesSocket = (config: SocketConfig) => {
             };
           }
 
+          if (groupData?.ephemeralDuration) {
+            additionalAttributes = {
+              ...additionalAttributes,
+              expiration: groupData.ephemeralDuration.toString()
+            };
+          }
+
           if (isStatus && statusJidList) {
             participantsList.push(...statusJidList);
           }

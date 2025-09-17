@@ -16,7 +16,7 @@ import {
   normalizeMessageContent,
   toNumber
 } from "../Utils";
-import { areJidsSameUser, jidNormalizedUser } from "../WABinary";
+import { areJidsSameUser, isJidGroup, jidNormalizedUser } from "../WABinary";
 
 type ProcessMessageContext = {
   shouldProcessHistoryMsg: boolean;
@@ -245,6 +245,20 @@ const processMessage = async (
           ephemeralSettingTimestamp: toNumber(message.messageTimestamp),
           ephemeralExpiration: protocolMsg.ephemeralExpiration || null
         });
+
+        if (chat.id && isJidGroup(chat.id)) {
+          const groupMetadata = config.groupMetadataCache?.get(chat.id) as
+            | GroupMetadata
+            | undefined;
+
+          if (!groupMetadata) break;
+
+          config.groupMetadataCache?.set(chat.id, {
+            ...groupMetadata,
+            ephemeralDuration: protocolMsg.ephemeralExpiration || null
+          });
+        }
+
         break;
       case proto.Message.ProtocolMessage.Type
         .PEER_DATA_OPERATION_REQUEST_RESPONSE_MESSAGE:
