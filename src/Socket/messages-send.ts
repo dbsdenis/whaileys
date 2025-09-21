@@ -394,8 +394,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
   ) => {
     const meId = authState.creds.me!.id;
     const meLid = authState.creds.me!.lid;
+    const isRetryResend = Boolean(participant?.jid);
 
-    let shouldIncludeDeviceIdentity = false;
+    let shouldIncludeDeviceIdentity = isRetryResend;
 
     const { user, server } = jidDecode(jid)!;
     const statusJid = "status@broadcast";
@@ -469,13 +470,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
             ? groupData.participants.map(p => p.id)
             : [];
 
-          if (!isStatus) {
-            additionalAttributes = {
-              ...additionalAttributes,
-              addressing_mode: groupData?.addressingMode || "pn"
-            };
-          }
-
           if (groupData?.ephemeralDuration) {
             additionalAttributes = {
               ...additionalAttributes,
@@ -495,6 +489,13 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           devices.push(...additionalDevices);
         }
 
+        if (isGroup) {
+          additionalAttributes = {
+            ...additionalAttributes,
+            addressing_mode: groupData?.addressingMode || "pn"
+          };
+        }
+
         const { ciphertext, senderKeyDistributionMessageKey } =
           await encryptSenderKeyMsgSignalProto(
             destinationJid,
@@ -511,7 +512,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
             groupData?.addressingMode === "lid" ? "lid" : "s.whatsapp.net",
             device
           );
-          if (!senderKeyMap[jid] || !!participant) {
+          if (!senderKeyMap[jid] && !isRetryResend) {
             senderKeyJids.push(jid);
             // store that this person has had the sender keys sent to them
             senderKeyMap[jid] = true;
@@ -543,15 +544,30 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           participants.push(...result.nodes);
         }
 
-        binaryNodeContent.push({
-          tag: "enc",
-          attrs: { v: "2", type: "skmsg" },
-          content: ciphertext
-        });
+        if (isRetryResend) {
+          const { type, ciphertext: encryptedContent } =
+            await encryptSignalProto(participant!.jid, encodedMsg, authState);
 
-        await authState.keys.set({
-          "sender-key-memory": { [jid]: senderKeyMap }
-        });
+          binaryNodeContent.push({
+            tag: "enc",
+            attrs: {
+              v: "2",
+              type,
+              count: participant!.count.toString()
+            },
+            content: encryptedContent
+          });
+        } else {
+          binaryNodeContent.push({
+            tag: "enc",
+            attrs: { v: "2", type: "skmsg" },
+            content: ciphertext
+          });
+
+          await authState.keys.set({
+            "sender-key-memory": { [jid]: senderKeyMap }
+          });
+        }
       } else {
         const { user: meUser } = jidDecode(meId)!;
         const { user: meLidUser } = jidDecode(meLid)!;
