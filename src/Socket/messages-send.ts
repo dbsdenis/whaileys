@@ -864,6 +864,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           messageId: fullMsg.key.id!,
           additionalAttributes
         });
+
+        config.sentMessagesCache?.set(fullMsg.key.id!, fullMsg.message);
+
         if (config.emitOwnEvents) {
           process.nextTick(() => {
             upsertMessage(fullMsg, "append");

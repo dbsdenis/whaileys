@@ -52,7 +52,13 @@ import { makeMessagesSocket } from "./messages-send";
 import { randomBytes } from "crypto";
 
 export const makeMessagesRecvSocket = (config: SocketConfig) => {
-  const { logger, retryRequestDelayMs, getMessage, shouldIgnoreJid } = config;
+  const {
+    logger,
+    retryRequestDelayMs,
+    getMessage,
+    sentMessagesCache,
+    shouldIgnoreJid
+  } = config;
   const sock = makeMessagesSocket(config);
   const {
     ev,
@@ -540,7 +546,13 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
     ids: string[],
     retryNode: BinaryNode
   ) => {
-    const msgs = await Promise.all(ids.map(id => getMessage({ ...key, id })));
+    const msgs = await Promise.all(
+      ids.map(
+        id =>
+          (sentMessagesCache?.get(id) as proto.IMessage | undefined) ||
+          getMessage({ ...key, id })
+      )
+    );
     const remoteJid = key.remoteJid!;
     const participant = key.participant || remoteJid;
     // if it's the primary jid sending the request
