@@ -16,10 +16,8 @@ export const WA_DEFAULT_EPHEMERAL = 7 * 24 * 60 * 60;
 
 export const DEFAULT_CACHE_TTLS = {
   SIGNAL_STORE: 5 * 60, // 5 minutes
-  MSG_RETRY: 60 * 60, // 1 hour
-  CALL_OFFER: 5 * 60, // 5 minutes
-  USER_DEVICES: 5 * 60, // 5 minutes
-  GROUP_METADATA: 15 * 60 // 15 minutes
+  GROUP_METADATA: 15 * 60, // 15 minutes
+  SENT_MESSAGES: 20 // 20 seconds
 };
 
 export const NOISE_MODE = "Noise_XX_25519_AESGCM_SHA256\0\0\0\0";
@@ -68,6 +66,10 @@ export const DEFAULT_CONNECTION_CONFIG: SocketConfig = {
   getMessage: async () => undefined,
   groupMetadataCache: new NodeCache({
     stdTTL: DEFAULT_CACHE_TTLS.GROUP_METADATA,
+    useClones: false
+  }),
+  sentMessagesCache: new NodeCache({
+    stdTTL: DEFAULT_CACHE_TTLS.SENT_MESSAGES,
     useClones: false
   })
 };
