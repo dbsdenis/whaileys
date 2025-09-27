@@ -46,7 +46,7 @@ export const decodeMessageStanza = (
     : stanza.attrs.sender_lid;
 
   const participantPn = isJidUser(stanza.attrs.participant)
-    ? stanza.attrs.participan
+    ? stanza.attrs.participant
     : stanza.attrs.participant_pn;
 
   const participantLid = isLidUser(stanza.attrs.participant)
