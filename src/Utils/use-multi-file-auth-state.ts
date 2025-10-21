@@ -39,11 +39,15 @@ export const useMultiFileAuthState = async (
 
   const removeData = async (file: string) => {
     try {
-      await unlink(fixFileName(file)!);
-    } catch {}
+      await unlink(join(folder, fixFileName(file)!));
+    } catch (error) {
+      // Silently ignore file deletion errors
+    }
   };
 
-  const folderInfo = await stat(folder).catch(() => {});
+  const folderInfo = await stat(folder).catch(() => {
+    // Return undefined if folder doesn't exist
+  });
   if (folderInfo) {
     if (!folderInfo.isDirectory()) {
       throw new Error(
