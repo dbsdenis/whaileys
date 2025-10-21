@@ -109,7 +109,14 @@ const startSock = async () => {
       // maybe it closed, or we received all offline message or connection opened
       if (events['connection.update']) {
         const update = events['connection.update']
-        const { connection, lastDisconnect } = update
+        const { connection, lastDisconnect, isNewLogin } = update
+
+        // Reset contador quando login bem-sucedido (após pair-success)
+        // O erro 515 após pair-success é esperado e deve reconectar rapidamente
+        if (isNewLogin) {
+          console.log('Login bem-sucedido! Resetando contador de reconexão.')
+          reconnectAttempts = 0
+        }
 
         if (connection === 'close') {
           const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode
