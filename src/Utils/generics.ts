@@ -384,24 +384,52 @@ export const getStatusFromReceiptType = (type: string | undefined) => {
 };
 
 const CODE_MAP: { [_: string]: DisconnectReason } = {
-  conflict: DisconnectReason.connectionReplaced
+  conflict: DisconnectReason.connectionReplaced,
+  "connection lost": DisconnectReason.connectionLost,
+  "timed out": DisconnectReason.timedOut,
+  "logged out": DisconnectReason.loggedOut,
+  forbidden: DisconnectReason.forbidden,
+  unavailable: DisconnectReason.unavailableService,
+  "bad session": DisconnectReason.badSession,
+  "restart required": DisconnectReason.restartRequired
 };
 
 /**
  * Stream errors generally provide a reason, map that to a baileys DisconnectReason
- * @param reason the string reason given, eg. "conflict"
+ * @param node the binary node containing error information
+ * @returns object with reason and statusCode
  */
 export const getErrorCodeFromStreamError = (node: BinaryNode) => {
+  // Validação do node
+  if (!node || !node.attrs) {
+    return {
+      reason: "unknown",
+      statusCode: DisconnectReason.badSession
+    };
+  }
+
   const [reasonNode] = getAllBinaryNodeChildren(node);
   let reason = reasonNode?.tag || "unknown";
+
+  // Tenta obter o código de várias fontes
   const statusCode = +(
     node.attrs.code ||
+    node.attrs.status ||
     CODE_MAP[reason] ||
     DisconnectReason.badSession
   );
 
+  // Mapeia códigos conhecidos para razões mais descritivas
   if (statusCode === DisconnectReason.restartRequired) {
     reason = "restart required";
+  } else if (statusCode === DisconnectReason.connectionLost) {
+    reason = "connection lost";
+  } else if (statusCode === DisconnectReason.timedOut) {
+    reason = "timed out";
+  } else if (statusCode === DisconnectReason.loggedOut) {
+    reason = "logged out";
+  } else if (statusCode === DisconnectReason.connectionReplaced) {
+    reason = "connection replaced";
   }
 
   return {

@@ -30,6 +30,11 @@ setInterval(() => {
   store?.writeToFile('./baileys_store_multi.json')
 }, 10_000)
 
+// Variáveis para controle de reconexão
+let reconnectAttempts = 0
+const MAX_RECONNECT_ATTEMPTS = 5
+const BASE_RECONNECT_DELAY = 1000 // 1 segundo
+
 // start a connection
 const startSock = async () => {
   const { state, saveCreds } = await useMultiFileAuthState('baileys_auth_info')
@@ -87,16 +92,46 @@ const startSock = async () => {
       if (events['connection.update']) {
         const update = events['connection.update']
         const { connection, lastDisconnect } = update
+
         if (connection === 'close') {
-          // reconnect if not logged out
-          if (
-            (lastDisconnect?.error as Boom)?.output?.statusCode !==
-            DisconnectReason.loggedOut
-          ) {
-            startSock()
+          const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode
+          const shouldReconnect = statusCode !== DisconnectReason.loggedOut
+
+          console.log('connection update', {
+            ...update,
+            shouldReconnect,
+            statusCode,
+            reconnectAttempts
+          })
+
+          if (shouldReconnect) {
+            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+              reconnectAttempts++
+              // Backoff exponencial: 1s, 2s, 4s, 8s, 16s (máximo 30s)
+              const delayMs = Math.min(
+                BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1),
+                30000
+              )
+
+              console.log(
+                `Reconectando em ${delayMs / 1000}s (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`
+              )
+
+              setTimeout(() => {
+                startSock()
+              }, delayMs)
+            } else {
+              console.error(
+                `Máximo de tentativas de reconexão atingido (${MAX_RECONNECT_ATTEMPTS}). Parando reconexões automáticas.`
+              )
+            }
           } else {
             console.log('Connection closed. You are logged out.')
           }
+        } else if (connection === 'open') {
+          // Reset contador ao conectar com sucesso
+          console.log('Conexão estabelecida com sucesso!')
+          reconnectAttempts = 0
         }
 
         console.log('connection update', update)
