@@ -95,38 +95,36 @@ const startSock = async () => {
 
         if (connection === 'close') {
           const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode
-          const shouldReconnect = statusCode !== DisconnectReason.loggedOut
+          const isLoggedOut = statusCode === DisconnectReason.loggedOut
 
           console.log('connection update', {
             ...update,
-            shouldReconnect,
             statusCode,
+            isLoggedOut,
             reconnectAttempts
           })
 
-          if (shouldReconnect) {
-            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-              reconnectAttempts++
-              // Backoff exponencial: 1s, 2s, 4s, 8s, 16s (máximo 30s)
-              const delayMs = Math.min(
-                BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1),
-                30000
-              )
+          // Sempre tenta reconectar quando a conexão é fechada
+          if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            reconnectAttempts++
+            // Backoff exponencial: 1s, 2s, 4s, 8s, 16s (máximo 30s)
+            const delayMs = Math.min(
+              BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1),
+              30000
+            )
 
-              console.log(
-                `Reconectando em ${delayMs / 1000}s (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`
-              )
+            const reason = isLoggedOut ? 'Deslogado (401) - será necessário escanear QR code' : `Erro ${statusCode}`
+            console.log(
+              `${reason} - Reconectando em ${delayMs / 1000}s (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`
+            )
 
-              setTimeout(() => {
-                startSock()
-              }, delayMs)
-            } else {
-              console.error(
-                `Máximo de tentativas de reconexão atingido (${MAX_RECONNECT_ATTEMPTS}). Parando reconexões automáticas.`
-              )
-            }
+            setTimeout(() => {
+              startSock()
+            }, delayMs)
           } else {
-            console.log('Connection closed. You are logged out.')
+            console.error(
+              `Máximo de tentativas de reconexão atingido (${MAX_RECONNECT_ATTEMPTS}). Parando reconexões automáticas.`
+            )
           }
         } else if (connection === 'open') {
           // Reset contador ao conectar com sucesso
