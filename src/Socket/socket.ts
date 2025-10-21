@@ -77,6 +77,18 @@ export const makeSocket = ({
   const noise = makeNoiseHandler(ephemeralKeyPair, logger);
 
   const { creds } = authState;
+
+  // Log de diagnóstico de autenticação
+  logger.debug(
+    {
+      hasCredentials: !!creds,
+      hasMe: !!creds?.me,
+      hasAccountSettings: !!creds?.accountSettings,
+      registered: creds?.registered,
+      timestamp: new Date().toISOString()
+    },
+    'Iniciando conexão WebSocket com credenciais'
+  );
   // add transaction capability
   const keys = addTransactionCapability(
     authState.keys,
@@ -695,9 +707,12 @@ export const makeSocket = ({
         reason,
         statusCode,
         attrs: node?.attrs,
-        shouldReconnect: statusCode !== DisconnectReason.loggedOut
+        shouldReconnect: statusCode !== DisconnectReason.loggedOut,
+        isLoggedOut: statusCode === DisconnectReason.loggedOut,
+        nodeData: JSON.stringify(node),
+        timestamp: new Date().toISOString()
       },
-      `stream errored out: ${reason} (${statusCode})`
+      `stream errored out: ${reason} (${statusCode})${statusCode === DisconnectReason.loggedOut ? ' - LOGGED OUT (401)' : ''}`
     );
 
     end(new Boom(`Stream Errored (${reason})`, { statusCode, data: node }));
@@ -711,9 +726,12 @@ export const makeSocket = ({
         node,
         reason,
         attrs: node?.attrs,
-        shouldReconnect: reason !== DisconnectReason.loggedOut
+        shouldReconnect: reason !== DisconnectReason.loggedOut,
+        isLoggedOut: reason === DisconnectReason.loggedOut,
+        nodeData: JSON.stringify(node),
+        timestamp: new Date().toISOString()
       },
-      `connection failure: ${reason}`
+      `connection failure: ${reason} - ${reason === DisconnectReason.loggedOut ? 'LOGGED OUT (401)' : 'Other failure'}`
     );
 
     end(
