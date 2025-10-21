@@ -1,4 +1,6 @@
 import { Boom } from '@hapi/boom'
+import { readdir, unlink } from 'fs/promises'
+import { join } from 'path'
 import makeWASocket, {
   AnyMessageContent,
   delay,
@@ -34,6 +36,22 @@ setInterval(() => {
 let reconnectAttempts = 0
 const MAX_RECONNECT_ATTEMPTS = 5
 const BASE_RECONNECT_DELAY = 1000 // 1 segundo
+const AUTH_FOLDER = 'baileys_auth_info'
+
+/**
+ * Limpa todas as credenciais de autenticação
+ * Usado quando o usuário é deslogado (401)
+ */
+const clearAuthFolder = async () => {
+  try {
+    const files = await readdir(AUTH_FOLDER)
+    const deletePromises = files.map(file => unlink(join(AUTH_FOLDER, file)))
+    await Promise.all(deletePromises)
+    console.log('Credenciais antigas removidas. Nova sessão será criada.')
+  } catch (error) {
+    console.log('Não foi possível limpar credenciais:', error)
+  }
+}
 
 // start a connection
 const startSock = async () => {
@@ -113,12 +131,18 @@ const startSock = async () => {
               30000
             )
 
-            const reason = isLoggedOut ? 'Deslogado (401) - será necessário escanear QR code' : `Erro ${statusCode}`
+            const reason = isLoggedOut
+              ? 'Deslogado (401) - Criando nova sessão com QR code'
+              : `Erro ${statusCode}`
             console.log(
               `${reason} - Reconectando em ${delayMs / 1000}s (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`
             )
 
-            setTimeout(() => {
+            setTimeout(async () => {
+              // Se foi logout, limpa credenciais antigas antes de reconectar
+              if (isLoggedOut) {
+                await clearAuthFolder()
+              }
               startSock()
             }, delayMs)
           } else {
