@@ -1,7 +1,7 @@
 const { Boom } = require('@hapi/boom');
 const { readdir, unlink } = require('fs/promises');
 const { join } = require('path');
-const makeWASocket = require('../src').default;
+const makeWASocket = require('../lib').default;
 const {
   delay,
   DisconnectReason,
@@ -9,8 +9,8 @@ const {
   makeCacheableSignalKeyStore,
   makeInMemoryStore,
   useMultiFileAuthState
-} = require('../src');
-const MAIN_LOGGER = require('../src/Utils/logger').default;
+} = require('../lib');
+const MAIN_LOGGER = require('../lib/Utils/logger').default;
 
 const logger = MAIN_LOGGER.child({});
 logger.level = 'trace';
