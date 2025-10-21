@@ -687,17 +687,37 @@ export const makeSocket = ({
   });
 
   ws.on("CB:stream:error", (node: BinaryNode) => {
-    logger.error({ node }, "stream errored out");
-
     const { reason, statusCode } = getErrorCodeFromStreamError(node);
+
+    logger.error(
+      {
+        node,
+        reason,
+        statusCode,
+        attrs: node?.attrs,
+        shouldReconnect: statusCode !== DisconnectReason.loggedOut
+      },
+      `stream errored out: ${reason} (${statusCode})`
+    );
 
     end(new Boom(`Stream Errored (${reason})`, { statusCode, data: node }));
   });
   // stream fail, possible logout
   ws.on("CB:failure", (node: BinaryNode) => {
-    const reason = +(node.attrs.reason || 500);
+    const reason = +(node?.attrs?.reason || 500);
+
+    logger.error(
+      {
+        node,
+        reason,
+        attrs: node?.attrs,
+        shouldReconnect: reason !== DisconnectReason.loggedOut
+      },
+      `connection failure: ${reason}`
+    );
+
     end(
-      new Boom("Connection Failure", { statusCode: reason, data: node.attrs })
+      new Boom("Connection Failure", { statusCode: reason, data: node?.attrs })
     );
   });
 

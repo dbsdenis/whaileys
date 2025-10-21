@@ -170,14 +170,23 @@ export const makeNoiseHandler = (
         let frame: Uint8Array | BinaryNode = inBytes.slice(3, size + 3);
         inBytes = inBytes.slice(size + 3);
 
-        if (isFinished) {
-          const result = decrypt(frame as Uint8Array);
-          frame = await decodeBinaryNode(result);
+        try {
+          if (isFinished) {
+            const result = decrypt(frame as Uint8Array);
+            frame = await decodeBinaryNode(result);
+          }
+
+          logger.trace({ msg: (frame as any)?.attrs?.id }, "recv frame");
+
+          onFrame(frame);
+        } catch (error) {
+          logger.error(
+            { error, frameSize: size },
+            "error processing frame"
+          );
+          throw error;
         }
 
-        logger.trace({ msg: (frame as any)?.attrs?.id }, "recv frame");
-
-        onFrame(frame);
         size = getBytesSize();
       }
     }
