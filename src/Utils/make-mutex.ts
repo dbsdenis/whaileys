@@ -1,20 +1,23 @@
 export const makeMutex = () => {
-  let task = Promise.resolve() as Promise<any>;
+  let task: Promise<unknown> = Promise.resolve();
   return {
     mutex<T>(code: () => Promise<T> | T): Promise<T> {
-      task = (async () => {
+      const newTask = (async () => {
         // wait for the previous task to complete
         // if there is an error, we swallow so as to not block the queue
         try {
           await task;
-        } catch {}
+        } catch (error) {
+          // Intentionally swallow errors to prevent blocking the mutex queue
+        }
 
         // execute the current task
         return code();
       })();
       // we replace the existing task, appending the new piece of execution to it
       // so the next task will have to wait for this one to finish
-      return task;
+      task = newTask;
+      return newTask;
     }
   };
 };

@@ -64,7 +64,7 @@ export const makeSocket = ({
 }: SocketConfig) => {
   const ws = new WebSocket(waWebSocketUrl, undefined, {
     origin: DEFAULT_ORIGIN,
-    headers: options.headers,
+    headers: options.headers as { [key: string]: string } | undefined,
     handshakeTimeout: connectTimeoutMs,
     timeout: connectTimeoutMs,
     agent
@@ -381,7 +381,10 @@ export const makeSocket = ({
     if (ws.readyState !== ws.CLOSED && ws.readyState !== ws.CLOSING) {
       try {
         ws.close();
-      } catch {}
+      } catch (error) {
+        // Silently ignore WebSocket close errors during cleanup
+        logger.debug({ error }, "Error closing WebSocket");
+      }
     }
 
     ev.emit("connection.update", {

@@ -48,11 +48,16 @@ const getTmpFilesDirectory = () => tmpdir();
 const getImageProcessingLibrary = async () => {
   const [_jimp, sharp] = await Promise.all([
     (async () => {
-      const jimp = await import("jimp").catch(() => {});
+      const jimp = await import("jimp").catch(() => {
+        // Optional dependency - return undefined if not installed
+      });
       return jimp;
     })(),
     (async () => {
-      const sharp = await import("sharp").catch(() => {});
+      // @ts-ignore - sharp is an optional dependency
+      const sharp = await import("sharp").catch(() => {
+        // Optional dependency - return undefined if not installed
+      });
       return sharp;
     })()
   ]);
@@ -475,7 +480,7 @@ export const downloadEncryptedContent = async (
     : undefined;
 
   const headers: { [_: string]: string } = {
-    ...(options?.headers || {}),
+    ...(options?.headers as { [_: string]: string } || {}),
     Origin: DEFAULT_ORIGIN
   };
   if (startChunk || endChunk) {

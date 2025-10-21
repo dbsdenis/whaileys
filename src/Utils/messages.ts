@@ -246,7 +246,8 @@ export const generateForwardMessageContent = (
     throw new Boom("no content in message", { statusCode: 400 });
   }
 
-  // hacky copy
+  // Deep copy using protobuf encode/decode to preserve all protobuf-specific fields
+  // This ensures we don't mutate the original message object
   content = normalizeMessageContent(content);
   content = proto.Message.decode(proto.Message.encode(content!).finish());
 
