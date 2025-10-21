@@ -602,13 +602,17 @@ export const makeSocket = ({
     )
   );
   // the server terminated the connection
-  ws.on("CB:xmlstreamend", () =>
-    end(
-      new Boom("Connection Terminated by Server", {
-        statusCode: DisconnectReason.connectionClosed
-      })
-    )
-  );
+  ws.on("CB:xmlstreamend", () => {
+    // Only process xmlstreamend if connection is not already closed
+    // This prevents duplicate end() calls when stream:error is followed by xmlstreamend
+    if (!closed) {
+      end(
+        new Boom("Connection Terminated by Server", {
+          statusCode: DisconnectReason.connectionClosed
+        })
+      );
+    }
+  });
   // QR gen
   ws.on("CB:iq,type:set,pair-device", async (stanza: BinaryNode) => {
     const iq: BinaryNode = {
@@ -701,18 +705,31 @@ export const makeSocket = ({
   ws.on("CB:stream:error", (node: BinaryNode) => {
     const { reason, statusCode } = getErrorCodeFromStreamError(node);
 
-    logger.error(
+    // Determine log level and message based on error type
+    const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+    const isRestartRequired = statusCode === DisconnectReason.restartRequired;
+    const logLevel = isRestartRequired ? 'info' : 'error';
+
+    let message = `stream errored out: ${reason} (${statusCode})`;
+    if (isLoggedOut) {
+      message += ' - LOGGED OUT (401)';
+    } else if (isRestartRequired) {
+      message += ' - Server requested restart (normal behavior, will reconnect)';
+    }
+
+    logger[logLevel](
       {
         node,
         reason,
         statusCode,
         attrs: node?.attrs,
-        shouldReconnect: statusCode !== DisconnectReason.loggedOut,
-        isLoggedOut: statusCode === DisconnectReason.loggedOut,
+        shouldReconnect: !isLoggedOut,
+        isLoggedOut,
+        isRestartRequired,
         nodeData: JSON.stringify(node),
         timestamp: new Date().toISOString()
       },
-      `stream errored out: ${reason} (${statusCode})${statusCode === DisconnectReason.loggedOut ? ' - LOGGED OUT (401)' : ''}`
+      message
     );
 
     end(new Boom(`Stream Errored (${reason})`, { statusCode, data: node }));
